@@ -15,21 +15,34 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:server": "node test-server.js"
   },
-  "keywords": ["blockchain", "server", "typescript", "express"],
+  "keywords": [
+    "blockchain",
+    "server",
+    "typescript",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
-    "ts-node": "^10.9.0",
     "nodemon": "^3.0.0",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
   },
   "dependencies": {
-    "express": "^4.18.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.0"
-  }
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HyeonLang/ToreBlockChainServer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HyeonLang/ToreBlockChainServer/issues"
+  },
+  "homepage": "https://github.com/HyeonLang/ToreBlockChainServer#readme"
 }

@@ -10,6 +10,46 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 
+// 요청 로깅 미들웨어
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const method = req.method;
+  const url = req.originalUrl;
+  const userAgent = req.get('User-Agent') || 'Unknown';
+  const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] || 'Unknown';
+  
+  console.log(`[${timestamp}] ${method} ${url} - IP: ${ip} - User-Agent: ${userAgent}`);
+  
+  // 요청 본문이 있는 경우 로그
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`[${timestamp}] Request Body:`, JSON.stringify(req.body, null, 2));
+  }
+  
+  // 응답 완료 후 상태 코드 로그
+  res.on('finish', () => {
+    const statusCode = res.statusCode;
+    const contentLength = res.get('Content-Length') || 0;
+    console.log(`[${timestamp}] ${method} ${url} - Status: ${statusCode} - Size: ${contentLength} bytes`);
+  });
+  
+  next();
+});
+
+// 에러 로깅 미들웨어
+app.use((err, req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.error(`[${timestamp}] ERROR: ${err.message}`);
+  console.error(`[${timestamp}] Stack: ${err.stack}`);
+  console.error(`[${timestamp}] Request: ${req.method} ${req.originalUrl}`);
+  console.error(`[${timestamp}] Headers:`, JSON.stringify(req.headers, null, 2));
+  
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    timestamp: timestamp,
+    message: err.message 
+  });
+});
+
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
