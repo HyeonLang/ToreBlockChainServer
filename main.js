@@ -35,21 +35,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 에러 로깅 미들웨어
-app.use((err, req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] ERROR: ${err.message}`);
-  console.error(`[${timestamp}] Stack: ${err.stack}`);
-  console.error(`[${timestamp}] Request: ${req.method} ${req.originalUrl}`);
-  console.error(`[${timestamp}] Headers:`, JSON.stringify(req.headers, null, 2));
-  
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    timestamp: timestamp,
-    message: err.message 
-  });
-});
-
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -73,6 +58,7 @@ function signRecord(record) {
   return hmac.digest('hex');
 }
 
+// 루트 엔드포인트
 app.get('/', (req, res) => {
   res.json({
     message: 'Tore Blockchain Off-chain NFT Server',
@@ -149,6 +135,20 @@ app.get('/api/blokchain/:id', (req, res) => {
   
   console.log(`[${timestamp}] NFT found:`, { id, to: rec.to, chain: rec.chain });
   return res.json(rec);
+});
+
+// 에러 로깅 미들웨어
+app.use((err, req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.error(`[${timestamp}] ERROR: ${err.message}`);
+  console.error(`[${timestamp}] Stack: ${err.stack}`);
+  console.error(`[${timestamp}] Request: ${req.method} ${req.originalUrl}`);
+  
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    timestamp: timestamp,
+    message: err.message 
+  });
 });
 
 // Fallback 404
