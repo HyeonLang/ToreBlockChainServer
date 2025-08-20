@@ -83,20 +83,28 @@ app.get('/', (req, res) => {
 
 // POST /api/blokchain — off-chain NFT issuance
 app.post('/api/blokchain', (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Processing NFT issuance request`);
+  
   const contentType = String(req.headers['content-type'] || '').toLowerCase();
   if (!contentType.includes('application/json')) {
+    console.log(`[${timestamp}] Invalid content-type: ${contentType}`);
     return res.status(415).json({ error: 'Content-Type must be application/json' });
   }
 
   const { to, metadataUri, chain } = req.body || {};
+  console.log(`[${timestamp}] NFT issuance data:`, { to, metadataUri, chain });
 
   if (!to || !isValidEthAddress(to)) {
+    console.log(`[${timestamp}] Invalid address: ${to}`);
     return res.status(400).json({ error: 'Invalid "to" (0x-prefixed 20-byte address required)' });
   }
   if (!metadataUri || typeof metadataUri !== 'string') {
+    console.log(`[${timestamp}] Invalid metadataUri: ${metadataUri}`);
     return res.status(400).json({ error: 'Invalid "metadataUri" (string required)' });
   }
   if (chain && typeof chain !== 'string') {
+    console.log(`[${timestamp}] Invalid chain: ${chain}`);
     return res.status(400).json({ error: 'Invalid "chain" (string if provided)' });
   }
 
@@ -111,6 +119,8 @@ app.post('/api/blokchain', (req, res) => {
   const signature = signRecord(record);
 
   issuedNfts.set(id, { ...record, signature });
+  
+  console.log(`[${timestamp}] NFT issued successfully:`, { id, to, chain: record.chain });
 
   return res.status(201).json({
     success: true,
@@ -126,25 +136,38 @@ app.post('/api/blokchain', (req, res) => {
 
 // Retrieve issued NFT record by id (off-chain lookup)
 app.get('/api/blokchain/:id', (req, res) => {
+  const timestamp = new Date().toISOString();
   const id = req.params.id;
+  
+  console.log(`[${timestamp}] Looking up NFT with ID: ${id}`);
+  
   const rec = issuedNfts.get(id);
-  if (!rec) return res.status(404).json({ error: 'Not found' });
+  if (!rec) {
+    console.log(`[${timestamp}] NFT not found: ${id}`);
+    return res.status(404).json({ error: 'Not found' });
+  }
+  
+  console.log(`[${timestamp}] NFT found:`, { id, to: rec.to, chain: rec.chain });
   return res.json(rec);
 });
 
 // Fallback 404
 app.use('*', (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 404 - Route not found: ${req.originalUrl}`);
   res.status(404).json({ error: 'Route not found', path: req.originalUrl });
 });
 
 app.listen(PORT, () => {
+  const timestamp = new Date().toISOString();
   console.log('='.repeat(60));
-  console.log('🚀 Tore Off-chain NFT Server');
+  console.log(`[${timestamp}] 🚀 Tore Off-chain NFT Server`);
   console.log('='.repeat(60));
-  console.log(`🌐 http://localhost:${PORT}`);
-  console.log('Available endpoints:');
-  console.log(` • POST /api/blokchain`);
-  console.log(` • GET  /api/blokchain/:id`);
+  console.log(`[${timestamp}] 🌐 http://localhost:${PORT}`);
+  console.log(`[${timestamp}] Available endpoints:`);
+  console.log(`[${timestamp}]  • POST /api/blokchain`);
+  console.log(`[${timestamp}]  • GET  /api/blokchain/:id`);
+  console.log(`[${timestamp}] Logging enabled for all requests`);
   console.log('='.repeat(60));
 });
 
