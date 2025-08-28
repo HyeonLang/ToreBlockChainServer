@@ -4,21 +4,23 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "hardhat.config.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "artifacts",
+    "cache"
   ]
 } 
