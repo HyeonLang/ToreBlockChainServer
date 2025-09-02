@@ -12,6 +12,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import nftRouter from "./routes/nft";
+import { errorHandler } from "./middleware/errorHandler";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
 dotenv.config();
@@ -41,6 +42,9 @@ app.get("/health", (_req, res) => {
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
 app.use("/api/nft", nftRouter);
+
+// 전역 에러 핸들러 (항상 라우터 다음에 위치)
+app.use(errorHandler);
 
 // 서버 포트 설정 (환경변수 PORT가 없으면 3000 사용)
 const port = Number(process.env.PORT || 3000);

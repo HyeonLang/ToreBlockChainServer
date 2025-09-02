@@ -47,8 +47,21 @@ export async function mintNftController(req: Request, res: Response) {
     // 요청 본문에서 파라미터 추출
     const { to, tokenURI } = req.body as { to: string; tokenURI: string };
     
-    // 필수 파라미터 검증
-    if (!to || !tokenURI) return res.status(400).json({ error: "Missing to or tokenURI" });
+    // 필수 파라미터 및 형식 검증
+    if (!to || typeof to !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
+      return res.status(400).json({ error: "Invalid 'to' address" });
+    }
+    if (!tokenURI || typeof tokenURI !== "string" || tokenURI.length > 2048) {
+      return res.status(400).json({ error: "Invalid 'tokenURI'" });
+    }
+    try {
+      const u = new URL(tokenURI);
+      if (!["http:", "https:", "ipfs:"].includes(u.protocol)) {
+        return res.status(400).json({ error: "Unsupported tokenURI scheme" });
+      }
+    } catch {
+      return res.status(400).json({ error: "Malformed tokenURI" });
+    }
 
     // 블록체인 컨트랙트 인스턴스 생성
     const contract = await getContract();
@@ -88,8 +101,14 @@ export async function burnNftController(req: Request, res: Response) {
     // 요청 본문에서 파라미터 추출
     const { tokenId } = req.body as { tokenId: string | number };
     
-    // 필수 파라미터 검증 (0도 유효한 tokenId이므로 undefined/null만 체크)
-    if (tokenId === undefined || tokenId === null) return res.status(400).json({ error: "Missing tokenId" });
+    // 필수 파라미터 및 형식 검증
+    if (tokenId === undefined || tokenId === null) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numeric = typeof tokenId === "string" ? Number(tokenId) : tokenId;
+    if (!Number.isInteger(numeric) || numeric < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
 
     // 블록체인 컨트랙트 인스턴스 생성
     const contract = await getContract();
