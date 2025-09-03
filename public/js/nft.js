@@ -26,6 +26,7 @@ class NFTMinter {
             // DOM 요소들
             this.elements = {
                 form: document.getElementById('mintForm'),
+                connectBtn: document.getElementById('connectBtn'),
                 recipientAddress: document.getElementById('recipientAddress'),
                 tokenURI: document.getElementById('tokenURI'),
                 mintBtn: document.getElementById('mintBtn'),
@@ -33,11 +34,13 @@ class NFTMinter {
                 btnLoading: document.getElementById('btnLoading'),
                 status: document.getElementById('status'),
                 walletInfo: document.getElementById('walletInfo'),
-                walletAddress: document.getElementById('walletAddress')
+                walletAddress: document.getElementById('walletAddress'),
+                logPanel: document.getElementById('logPanel')
             };
 
             // 이벤트 리스너 등록
             this.elements.form.addEventListener('submit', (e) => this.handleMint(e));
+            this.elements.connectBtn.addEventListener('click', () => this.connectWallet());
             
             // 컨트랙트 주소 가져오기 (옵션: 서버에서 응답으로 내려주므로 필수 아님)
             await this.getContractAddress().catch(() => {});
@@ -78,6 +81,7 @@ class NFTMinter {
             }
 
             // 지갑 연결 요청
+            this.log('Requesting wallet connection...');
             const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts'
             });
@@ -93,6 +97,7 @@ class NFTMinter {
             
             // 연결된 주소 표시
             const address = await this.signer.getAddress();
+            this.log('Connected address: ' + address);
             this.elements.walletAddress.textContent = address;
             this.elements.walletInfo.classList.remove('hidden');
             
@@ -108,7 +113,8 @@ class NFTMinter {
             return true;
 
         } catch (error) {
-            this.showStatus('지갑 연결 실패: ' + error.message, 'error');
+            this.showStatus('지갑 연결 실패: ' + (error && error.message ? error.message : String(error)), 'error');
+            this.log('connectWallet error: ' + (error && error.stack ? error.stack : String(error)));
             return false;
         }
     }
@@ -138,18 +144,21 @@ class NFTMinter {
             // 버튼 비활성화 및 로딩 표시
             this.setLoading(true);
             this.showStatus('NFT 민팅을 시작합니다...', 'info');
+            this.log('POST /api/nft/mint to=' + to + ' tokenURI=' + tokenURI);
 
             // 민팅 API 호출
             const mintResult = await this.mintNFT(to, tokenURI);
             
             if (mintResult.success) {
                 this.showStatus(`민팅 성공! 토큰 ID: ${mintResult.tokenId}`, 'success');
+                this.log('Mint success txHash=' + mintResult.txHash + ' tokenId=' + mintResult.tokenId + ' contractAddress=' + mintResult.contractAddress);
                 
                 // 자동으로 지갑에 NFT 추가
                 await this.addNFTToWallet(mintResult.contractAddress || this.contractAddress, mintResult.tokenId);
                 
             } else {
                 this.showStatus('민팅 실패: ' + mintResult.error, 'error');
+                this.log('Mint failed: ' + mintResult.error);
             }
 
         } catch (error) {
@@ -173,6 +182,7 @@ class NFTMinter {
             });
 
             const data = await response.json();
+            this.log('Mint response: ' + JSON.stringify(data));
 
             if (!response.ok) {
                 return {
@@ -191,7 +201,7 @@ class NFTMinter {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: error && error.message ? error.message : String(error)
             };
         }
     }
@@ -202,6 +212,7 @@ class NFTMinter {
     async addNFTToWallet(contractAddress, tokenId) {
         try {
             this.showStatus('지갑에 NFT를 추가하는 팝업을 호출합니다...', 'info');
+            this.log('wallet_watchAsset address=' + contractAddress + ' tokenId=' + tokenId);
             
             if (!contractAddress) {
                 throw new Error('컨트랙트 주소를 확인할 수 없습니다.');
@@ -224,10 +235,11 @@ class NFTMinter {
             this.showStatus('NFT가 성공적으로 지갑에 추가되었습니다! 🎉', 'success');
             
         } catch (error) {
-            if (error.code === 4001) {
+            if (error && error.code === 4001) {
                 this.showStatus('지갑 추가가 취소되었습니다.', 'info');
             } else {
-                this.showStatus('지갑 추가 실패: ' + error.message, 'error');
+                this.showStatus('지갑 추가 실패: ' + (error && error.message ? error.message : String(error)), 'error');
+                this.log('wallet_watchAsset error: ' + (error && error.stack ? error.stack : String(error)));
             }
         }
     }
@@ -255,6 +267,21 @@ class NFTMinter {
                 this.elements.status.classList.add('hidden');
             }, 5000);
         }
+    }
+
+    /**
+     * 로그 출력
+     */
+    log(msg) {
+        if (!this.elements || !this.elements.logPanel) return;
+        const time = new Date().toLocaleTimeString();
+        const line = `[${time}] ${msg}`;
+        const div = document.createElement('div');
+        div.textContent = line;
+        this.elements.logPanel.appendChild(div);
+        this.elements.logPanel.scrollTop = this.elements.logPanel.scrollHeight;
+        // 콘솔에도 출력
+        try { console.log(line); } catch (_) {}
     }
 }
 

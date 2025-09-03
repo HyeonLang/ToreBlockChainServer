@@ -44,6 +44,7 @@ export async function contractAddressController(_req: Request, res: Response) {
  */
 export async function mintNftController(req: Request, res: Response) {
   try {
+    console.log('[mint] request body:', req.body);
     // 요청 본문에서 파라미터 추출
     const { to, tokenURI } = req.body as { to: string; tokenURI: string };
     
@@ -68,9 +69,11 @@ export async function mintNftController(req: Request, res: Response) {
     
     // NFT 민팅 트랜잭션 실행
     const tx = await contract.mint(to, tokenURI);
+    console.log('[mint] tx sent:', tx.hash);
     
     // 트랜잭션 완료 대기 및 영수증 획득
     const receipt = await tx.wait();
+    console.log('[mint] tx mined:', receipt?.hash);
     
     // Transfer 이벤트에서 tokenId 추출
     let tokenId: number | null = null;
@@ -80,6 +83,7 @@ export async function mintNftController(req: Request, res: Response) {
           const parsedLog = contract.interface.parseLog(log);
           if (parsedLog?.name === 'Transfer' && parsedLog.args) {
             tokenId = Number(parsedLog.args[2]); // tokenId는 세 번째 인자
+            console.log('[mint] tokenId parsed:', tokenId);
             break;
           }
         } catch {
@@ -89,13 +93,16 @@ export async function mintNftController(req: Request, res: Response) {
     }
     
     // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환
-    return res.json({ 
+    const payload = { 
       txHash: receipt?.hash ?? tx.hash,
       tokenId: tokenId,
       contractAddress: process.env.CONTRACT_ADDRESS || null
-    });
+    };
+    console.log('[mint] response:', payload);
+    return res.json(payload);
   } catch (err: any) {
     // 에러 처리 및 500 상태코드로 응답
+    console.error('[mint] error:', err);
     return res.status(500).json({ error: err.message || "Mint failed" });
   }
 }

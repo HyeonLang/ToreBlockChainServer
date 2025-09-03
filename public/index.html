@@ -189,6 +189,10 @@
                 </small>
             </div>
 
+            <button type="button" id="connectBtn" class="btn" style="margin-bottom:12px;">
+                메타마스크 지갑 연결
+            </button>
+
             <button type="submit" id="mintBtn" class="btn">
                 <span id="btnText">NFT 민팅하기</span>
                 <span id="btnLoading" class="loading hidden"></span>
@@ -196,9 +200,10 @@
         </form>
 
         <div id="status" class="status hidden"></div>
+        <div id="logPanel" class="status info" style="margin-top:12px; max-height:180px; overflow:auto;"></div>
     </div>
 
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
     <script src="js/nft.js"></script>
 </body>
 </html>
