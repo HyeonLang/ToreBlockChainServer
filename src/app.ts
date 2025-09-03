@@ -24,6 +24,17 @@ const app = express();
 // 클라이언트에서 보내는 JSON 데이터를 req.body로 접근 가능하게 함
 app.use(express.json());
 
+// 정적 파일 서빙 (HTML, CSS, JS 파일들)
+// public 폴더의 파일들을 루트 경로에서 접근 가능하게 함
+app.use(express.static("public"));
+
+/**
+ * 루트 경로 - 메인 페이지로 리다이렉트
+ */
+app.get("/", (_req, res) => {
+  res.sendFile("index.html", { root: "public" });
+});
+
 /**
  * 헬스 체크 엔드포인트
  * 서버가 정상적으로 실행 중인지 확인하는 용도

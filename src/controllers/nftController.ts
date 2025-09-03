@@ -3,7 +3,7 @@
  * 
  * 기능:
  * - 블록체인과의 상호작용 처리
- * - NFT 민팅, 소각, 컨트랙트 주소 조회
+ * - NFT 민팅, 전송, 소각, 조회
  * - 에러 처리 및 응답 포맷팅
  */
 
@@ -34,11 +34,11 @@ export async function contractAddressController(_req: Request, res: Response) {
  * 2. 필수 파라미터 검증
  * 3. 블록체인 컨트랙트 인스턴스 생성
  * 4. mint 함수 호출하여 NFT 생성
- * 5. 트랜잭션 해시 반환
+ * 5. 트랜잭션 해시와 생성된 tokenId 반환
  * 
  * @param req - Express Request 객체
  * @param res - Express Response 객체
- * @returns { txHash: string } - 트랜잭션 해시
+ * @returns { txHash: string, tokenId: number } - 트랜잭션 해시와 토큰 ID
  * @throws 400 - 필수 파라미터 누락 시
  * @throws 500 - 블록체인 상호작용 실패 시
  */
@@ -72,11 +72,84 @@ export async function mintNftController(req: Request, res: Response) {
     // 트랜잭션 완료 대기 및 영수증 획득
     const receipt = await tx.wait();
     
-    // 트랜잭션 해시 반환 (영수증이 있으면 영수증 해시, 없으면 트랜잭션 해시)
-    return res.json({ txHash: receipt?.hash ?? tx.hash });
+    // Transfer 이벤트에서 tokenId 추출
+    let tokenId: number | null = null;
+    if (receipt?.logs) {
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = contract.interface.parseLog(log);
+          if (parsedLog?.name === 'Transfer' && parsedLog.args) {
+            tokenId = Number(parsedLog.args[2]); // tokenId는 세 번째 인자
+            break;
+          }
+        } catch {
+          // 로그 파싱 실패 시 무시하고 계속 진행
+        }
+      }
+    }
+    
+    // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환
+    return res.json({ 
+      txHash: receipt?.hash ?? tx.hash,
+      tokenId: tokenId,
+      contractAddress: process.env.CONTRACT_ADDRESS || null
+    });
   } catch (err: any) {
     // 에러 처리 및 500 상태코드로 응답
     return res.status(500).json({ error: err.message || "Mint failed" });
+  }
+}
+
+/**
+ * NFT 전송 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 요청 본문에서 from(보내는 주소), to(받는 주소), tokenId 추출
+ * 2. 필수 파라미터 검증
+ * 3. 블록체인 컨트랙트 인스턴스 생성
+ * 4. transferFrom 함수 호출하여 NFT 전송
+ * 5. 트랜잭션 해시 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { txHash: string } - 트랜잭션 해시
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function transferNftController(req: Request, res: Response) {
+  try {
+    // 요청 본문에서 파라미터 추출
+    const { from, to, tokenId } = req.body as { from: string; to: string; tokenId: string | number };
+    
+    // 필수 파라미터 및 형식 검증
+    if (!from || typeof from !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(from)) {
+      return res.status(400).json({ error: "Invalid 'from' address" });
+    }
+    if (!to || typeof to !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
+      return res.status(400).json({ error: "Invalid 'to' address" });
+    }
+    if (tokenId === undefined || tokenId === null) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numeric = typeof tokenId === "string" ? Number(tokenId) : tokenId;
+    if (!Number.isInteger(numeric) || numeric < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    // 블록체인 컨트랙트 인스턴스 생성
+    const contract = await getContract();
+    
+    // NFT 전송 트랜잭션 실행
+    const tx = await contract.transferFrom(from, to, BigInt(tokenId));
+    
+    // 트랜잭션 완료 대기 및 영수증 획득
+    const receipt = await tx.wait();
+    
+    // 트랜잭션 해시 반환
+    return res.json({ txHash: receipt?.hash ?? tx.hash });
+  } catch (err: any) {
+    // 에러 처리 및 500 상태코드로 응답
+    return res.status(500).json({ error: err.message || "Transfer failed" });
   }
 }
 
@@ -124,6 +197,56 @@ export async function burnNftController(req: Request, res: Response) {
   } catch (err: any) {
     // 에러 처리 및 500 상태코드로 응답
     return res.status(500).json({ error: err.message || "Burn failed" });
+  }
+}
+
+/**
+ * NFT 조회 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. URL 파라미터에서 tokenId 추출
+ * 2. 필수 파라미터 검증
+ * 3. 블록체인 컨트랙트 인스턴스 생성
+ * 4. ownerOf와 tokenURI 함수 호출하여 정보 조회
+ * 5. 소유자 주소와 메타데이터 URI 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { owner: string, tokenURI: string } - 소유자 주소와 메타데이터 URI
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function getNftController(req: Request, res: Response) {
+  try {
+    // URL 파라미터에서 tokenId 추출
+    const { tokenId } = req.params;
+    
+    // 필수 파라미터 및 형식 검증
+    if (!tokenId) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numeric = Number(tokenId);
+    if (!Number.isInteger(numeric) || numeric < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    // 블록체인 컨트랙트 인스턴스 생성
+    const contract = await getContract();
+    
+    // NFT 정보 조회 (가스 비용 없음 - view 함수)
+    const [owner, tokenURI] = await Promise.all([
+      contract.ownerOf(BigInt(tokenId)),
+      contract.tokenURI(BigInt(tokenId))
+    ]);
+    
+    // 소유자 주소와 메타데이터 URI 반환
+    return res.json({ 
+      owner: owner,
+      tokenURI: tokenURI
+    });
+  } catch (err: any) {
+    // 에러 처리 및 500 상태코드로 응답
+    return res.status(500).json({ error: err.message || "NFT query failed" });
   }
 }
 
