@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFT 민팅 & 지갑 추가</title>
+    <title>NFT 관리 시스템</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
         }
 
@@ -44,6 +44,38 @@
         .header p {
             color: #666;
             font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .form-group {
@@ -94,6 +126,14 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
 
         .status {
@@ -161,13 +201,32 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .nft-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .nft-info h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .nft-info p {
+            margin-bottom: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨 NFT 민팅</h1>
-            <p>NFT를 민팅하고 자동으로 지갑에 추가하세요</p>
+            <h1>🎨 NFT 관리 시스템</h1>
+            <p>NFT 생성, 전송, 삭제를 한 곳에서 관리하세요</p>
         </div>
 
         <div id="walletInfo" class="wallet-info hidden">
@@ -175,29 +234,100 @@
             <div id="walletAddress" class="wallet-address"></div>
         </div>
 
-        <form id="mintForm">
-            <div class="form-group">
-                <label for="recipientAddress">받는 주소 (지갑 주소)</label>
-                <input type="text" id="recipientAddress" placeholder="0x..." required>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create')">생성</button>
+            <button class="tab" onclick="switchTab('transfer')">전송</button>
+            <button class="tab" onclick="switchTab('delete')">삭제</button>
+            <button class="tab" onclick="switchTab('info')">조회</button>
+        </div>
+
+        <!-- NFT 생성 탭 -->
+        <div id="createTab" class="tab-content active">
+            <form id="mintForm">
+                <div class="form-group">
+                    <label for="recipientAddress">받는 주소 (지갑 주소)</label>
+                    <input type="text" id="recipientAddress" placeholder="0x..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="tokenURI">토큰 URI (메타데이터 URL)</label>
+                    <input type="url" id="tokenURI" placeholder="https://..." required>
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        예시: https://ipfs.io/ipfs/QmYourMetadataHash
+                    </small>
+                </div>
+
+                <button type="button" id="connectBtn" class="btn" style="margin-bottom:12px;">
+                    메타마스크 지갑 연결
+                </button>
+
+                <button type="submit" id="mintBtn" class="btn">
+                    <span id="btnText">NFT 생성하기</span>
+                    <span id="btnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- NFT 전송 탭 -->
+        <div id="transferTab" class="tab-content">
+            <form id="transferForm">
+                <div class="form-group">
+                    <label for="transferFrom">보내는 주소</label>
+                    <input type="text" id="transferFrom" placeholder="0x..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="transferTo">받는 주소</label>
+                    <input type="text" id="transferTo" placeholder="0x..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="transferTokenId">토큰 ID</label>
+                    <input type="number" id="transferTokenId" placeholder="1" required>
+                </div>
+
+                <button type="submit" id="transferBtn" class="btn">
+                    <span id="transferBtnText">NFT 전송하기</span>
+                    <span id="transferBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- NFT 삭제 탭 -->
+        <div id="deleteTab" class="tab-content">
+            <form id="deleteForm">
+                <div class="form-group">
+                    <label for="deleteTokenId">삭제할 토큰 ID</label>
+                    <input type="number" id="deleteTokenId" placeholder="1" required>
+                </div>
+
+                <button type="submit" id="deleteBtn" class="btn btn-danger">
+                    <span id="deleteBtnText">NFT 삭제하기</span>
+                    <span id="deleteBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- NFT 조회 탭 -->
+        <div id="infoTab" class="tab-content">
+            <form id="infoForm">
+                <div class="form-group">
+                    <label for="infoTokenId">조회할 토큰 ID</label>
+                    <input type="number" id="infoTokenId" placeholder="1" required>
+                </div>
+
+                <button type="submit" id="infoBtn" class="btn">
+                    <span id="infoBtnText">NFT 정보 조회</span>
+                    <span id="infoBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div id="nftInfo" class="nft-info hidden">
+                <h4>NFT 정보</h4>
+                <p><strong>소유자:</strong> <span id="nftOwner"></span></p>
+                <p><strong>토큰 URI:</strong> <span id="nftTokenURI"></span></p>
             </div>
-
-            <div class="form-group">
-                <label for="tokenURI">토큰 URI (메타데이터 URL)</label>
-                <input type="url" id="tokenURI" placeholder="https://..." required>
-                <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
-                    예시: https://ipfs.io/ipfs/QmYourMetadataHash
-                </small>
-            </div>
-
-            <button type="button" id="connectBtn" class="btn" style="margin-bottom:12px;">
-                메타마스크 지갑 연결
-            </button>
-
-            <button type="submit" id="mintBtn" class="btn">
-                <span id="btnText">NFT 민팅하기</span>
-                <span id="btnLoading" class="loading hidden"></span>
-            </button>
-        </form>
+        </div>
 
         <div id="status" class="status hidden"></div>
         <div id="logPanel" class="status info" style="margin-top:12px; max-height:180px; overflow:auto;"></div>
@@ -205,5 +335,16 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
     <script src="js/nft.js"></script>
+    <script>
+        function switchTab(tabName) {
+            // 모든 탭과 콘텐츠 비활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 선택된 탭과 콘텐츠 활성화
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+    </script>
 </body>
 </html>
