@@ -1,12 +1,17 @@
-## Hardhat + TypeScript + Express 템플릿
+## Hardhat + TypeScript + Express 템플릿 (v1 API 적용)
 
 Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트와 Express JSON API 서버 템플릿입니다.
+이 프로젝트는 v1 버전의 RESTful API, API 키 인증, 레이트 리미팅, 지갑 보유 NFT 조회가 추가되었습니다.
 
 ### 🆕 새로운 기능
-- **웹 인터페이스**: NFT 민팅을 위한 사용자 친화적인 웹 페이지
-- **자동 지갑 연결**: 메타마스크 지갑 자동 연결 및 주소 자동 입력
-- **자동 NFT 추가**: 민팅 완료 후 자동으로 지갑에 NFT 추가 (`wallet_watchAsset`)
-- **실시간 상태 표시**: 민팅 진행 상황을 실시간으로 표시
+- **웹 인터페이스**: NFT 생성/전송/삭제/조회 UI
+- **자동 지갑 연결**: 메타마스크 연결 및 주소 자동 입력
+- **자동 NFT 추가**: 민팅 완료 후 지갑에 NFT 자동 추가 (`wallet_watchAsset`)
+- **실시간 상태 표시**: 진행 상황을 실시간 표시
+- **v1 REST API**: 버전드 경로(`/v1`)와 표준 HTTP 메서드 매핑
+- **API 키 인증**: `x-api-key` 헤더 지원 (선택)
+- **레이트 리미팅**: 인메모리 토큰 버킷 방식 (기본 60req/분)
+- **지갑 전체 NFT 조회**: 컨트랙트 `nextTokenId` 순회 기반
 
 ### 요구사항
 - Node.js >= 18.17
@@ -18,6 +23,22 @@ npm install
 
 ### 환경 변수 설정
 `.env` 파일을 만들고 아래 예시를 참고하세요(`.env.example` 참고).
+
+```env
+# 블록체인
+RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
+PRIVATE_KEY=0x...
+CONTRACT_ADDRESS=0x...
+
+# 서버
+PORT=3000
+NODE_ENV=development
+
+# 인증 / 레이트 리미팅 (선택)
+API_KEY=your-api-key
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=60
+```
 
 ### 사용법
 ```bash
@@ -53,12 +74,23 @@ public/             # 프론트엔드 파일 (HTML/CSS/JS)
     nft.js         # NFT 관련 JavaScript 로직
 ```
 
-### 주요 API
-- POST `/api/nft/mint` { to, tokenURI }
-- POST `/api/nft/burn` { tokenId }
-- GET  `/api/nft/address`
-- GET  `/api/nft/:tokenId` - NFT 정보 조회
-- POST `/api/nft/transfer` { from, to, tokenId } - NFT 전송
+### 주요 API (v1)
+- POST `/v1/nfts/mint`
+  - Request: `{ walletAddress, contractAddress?, itemInfo: { tokenURI } }`
+  - Response: `{ nftId, success }`
+- PATCH `/v1/nfts/{nftId}/transfer`
+  - Request: `{ fromWalletAddress, toWalletAddress, contractAddress? }`
+  - Response: `{ nftId, success }`
+- DELETE `/v1/nfts/{nftId}`
+  - Request: `{ walletAddress?, contractAddress? }`
+  - Response: `{ nftId, success }`
+- GET `/v1/nfts/{nftId}`
+  - Response: `{ exists, ownerAddress?, contractAddress?, tokenURI? }`
+- GET `/v1/wallets/{walletAddress}/nfts`
+  - Response: `{ nfts: [{ nftId, contractAddress, itemInfo: { tokenURI } }], success }`
+
+기존 경로(하위 호환):
+- `POST /api/nft/mint`, `POST /api/nft/transfer`, `POST /api/nft/burn`, `GET /api/nft/:tokenId`, `GET /api/nft/address`
 
 ### 웹 인터페이스
 - `GET /` - NFT 민팅 웹 페이지
@@ -71,6 +103,62 @@ avax fuji testnet faucet 주소
 https://core.app/tools/testnet-faucet/
 
 ## 빠른 테스트 절차
+### v1 API 호출 예시 (PowerShell)
+
+1) 민팅
+```powershell
+$body = @{
+  walletAddress = "0x1234567890abcdef1234567890abcdef12345678"
+  itemInfo = @{ tokenURI = "ipfs://bafy..." }
+} | ConvertTo-Json
+
+$headers = @{ "x-api-key" = "your-api-key" }
+Invoke-RestMethod -Uri "http://localhost:3000/v1/nfts/mint" -Headers $headers -Method Post -ContentType "application/json" -Body $body
+```
+
+2) 전송
+```powershell
+$body = @{
+  fromWalletAddress = "0x1111111111111111111111111111111111111111"
+  toWalletAddress = "0x2222222222222222222222222222222222222222"
+} | ConvertTo-Json
+
+$headers = @{ "x-api-key" = "your-api-key" }
+Invoke-RestMethod -Uri "http://localhost:3000/v1/nfts/1/transfer" -Headers $headers -Method Patch -ContentType "application/json" -Body $body
+```
+
+3) 소각
+```powershell
+$headers = @{ "x-api-key" = "your-api-key" }
+Invoke-RestMethod -Uri "http://localhost:3000/v1/nfts/1" -Headers $headers -Method Delete
+```
+
+4) 단일 조회
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/v1/nfts/1" -Method Get
+```
+
+5) 지갑 내 전체 NFT 조회
+```powershell
+Invoke-RestMethod -Uri "http://localhost:3000/v1/wallets/0x1234567890abcdef1234567890abcdef12345678/nfts" -Method Get
+```
+
+## 변경사항(Change Log)
+
+- feat(api): v1 버전 도입 및 RESTful 경로/메서드 정렬 (`/v1/...`)
+- feat(auth): API 키 기반 인증(`x-api-key`) 추가 (`src/middleware/auth.ts`)
+- feat(rate-limit): 인메모리 토큰 버킷 레이트리미팅 추가 (`src/middleware/rateLimit.ts`)
+- feat(v1): 컨트롤러 추가(민팅/전송/소각/단일조회/지갑내목록) (`src/v1/controllers.ts`)
+- feat(routing): v1 라우터 마운트 (`src/routes/v1.ts`, `src/app.ts`)
+- docs: README 및 실행 흐름 문서 업데이트
+
+## 문제 해결 과정(Selected Fixes)
+
+- 설계와 구현 간 경로/메서드 불일치 → v1 라우터로 표준화
+- 무인증 API → `x-api-key` 인증 도입으로 최소 보호선 제공
+- Abuse 가능성(과도한 호출) → 토큰 버킷 레이트리미터 적용(기본 60rpm)
+- 지갑 보유 NFT 목록 제공 필요 → `nextTokenId` 순회 + `ownerOf`/`tokenURI`로 구성
+
 
 ### 방법 1: 웹 인터페이스 사용 (권장)
 1단계: 서버 실행

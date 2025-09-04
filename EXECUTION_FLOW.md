@@ -1,4 +1,4 @@
-# Tore Blockchain Server - 실행 흐름 분석
+# Tore Blockchain Server - 실행 흐름 (v1 반영)
 
 ## 📁 프로젝트 구조
 
@@ -6,13 +6,16 @@
 src/
 ├── app.ts              # 메인 애플리케이션 진입점
 ├── routes/
-│   └── nft.ts         # NFT 관련 라우터
+│   ├── nft.ts         # 구버전 라우터 (/api/nft)
+│   └── v1.ts          # v1 라우터 (/v1)
 ├── controllers/
 │   └── nftController.ts # NFT 비즈니스 로직 컨트롤러
 ├── utils/
 │   └── contract.ts    # 블록체인 연결 유틸리티
 └── middleware/
-    └── errorHandler.ts # 전역 에러 처리
+    ├── errorHandler.ts # 전역 에러 처리
+    ├── auth.ts         # API 키 인증 (x-api-key)
+    └── rateLimit.ts    # 토큰 버킷 레이트 리미터
 
 contracts/
 └── GameItem.sol       # NFT 스마트 컨트랙트
@@ -25,25 +28,27 @@ contracts/
 1. 환경변수 로드 (.env)
 2. Express 서버 초기화
 3. JSON 파싱 미들웨어 등록
-4. 라우터 등록 (/api/nft)
+4. 정적 파일 서빙 (public)
+5. 라우터 등록 (/api/nft, /v1)
 5. 서버 시작 (포트 3000)
 ```
 
 ### 2. API 요청 처리 흐름
 
-#### NFT 민팅 요청 예시:
+#### v1 NFT 민팅 요청 예시:
 ```
-POST /api/nft/mint
-Body: { "to": "0x...", "tokenURI": "https://..." }
+POST /v1/nfts/mint
+Headers: x-api-key: <API_KEY>
+Body: { "walletAddress": "0x...", "itemInfo": { "tokenURI": "ipfs://..." } }
 ```
 
 **처리 과정:**
-1. `app.ts` → 요청 수신
-2. `routes/nft.ts` → `/mint` 라우트 매칭
-3. `controllers/nftController.ts` → `mintNftController` 호출
-4. `utils/contract.ts` → 블록체인 연결 및 컨트랙트 인스턴스 생성
-5. `GameItem.sol` → `mint` 함수 실행
-6. 트랜잭션 해시 반환
+1. `app.ts` → `/v1`로 위임
+2. `routes/v1.ts` → 인증/레이트리미트 미들웨어 통과 후 `/nfts/mint` 매칭
+3. `v1/controllers.ts` → `v1MintController` 실행 (입력 검증)
+4. `utils/contract.ts` → 컨트랙트 인스턴스 획득
+5. `GameItem.sol` → `mint` 호출 → 이벤트에서 `tokenId` 파싱
+6. `{ nftId, success }` 반환
 
 ## 📋 각 파일별 상세 기능
 
@@ -56,7 +61,16 @@ Body: { "to": "0x...", "tokenURI": "https://..." }
   - 서버 시작
 - **엔드포인트**: `/health` (헬스 체크)
 
-### `src/routes/nft.ts` - NFT 라우터
+### `src/routes/nft.ts` - 구버전 라우터
+### `src/routes/v1.ts` - v1 라우터
+- **역할**: RESTful v1 API 엔드포인트 정의
+- **주요 기능**: 인증/레이트리미트 미들웨어 적용 후 각 컨트롤러 연결
+
+### `src/v1/controllers.ts` - v1 비즈니스 로직
+- **역할**: v1 요청 검증 및 블록체인 상호작용
+- **주요 함수**:
+  - `v1MintController` / `v1TransferController` / `v1BurnController`
+  - `v1GetOneController` / `v1ListByWalletController`
 - **역할**: NFT 관련 API 엔드포인트 정의
 - **주요 기능**:
   - `GET /api/nft/address` - 컨트랙트 주소 조회
@@ -79,6 +93,13 @@ Body: { "to": "0x...", "tokenURI": "https://..." }
   - `getContract()`: GameItem 컨트랙트 인스턴스 생성
 
 ### `src/middleware/errorHandler.ts` - 에러 처리
+### `src/middleware/auth.ts` - 인증
+- **역할**: `x-api-key` 헤더를 통한 단순 API 키 인증
+- **비고**: `API_KEY` 미설정 시 우회
+
+### `src/middleware/rateLimit.ts` - 레이트 리미팅
+- **역할**: 토큰 버킷 기반 요청 속도 제한
+- **설정**: `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`
 - **역할**: 전역 에러 핸들러
 - **주요 기능**: 일관된 에러 응답 포맷 제공
 
@@ -109,7 +130,13 @@ NODE_ENV=development
 GET /api/nft/address
 ```
 
-### 2. NFT 민팅
+### 2. NFT 민팅 (구버전)
+### 3. NFT 민팅 (v1)
+```
+POST /v1/nfts/mint
+Headers: x-api-key: <API_KEY>
+Body: { "walletAddress": "0x...", "itemInfo": { "tokenURI": "ipfs://..." } }
+```
 ```bash
 POST /api/nft/mint
 Content-Type: application/json
@@ -133,6 +160,6 @@ Content-Type: application/json
 ## ⚠️ 주의사항
 
 1. **보안**: 개인키는 환경변수로 관리
-2. **권한**: 민팅/소각은 컨트랙트 소유자만 가능
+2. **권한**: 민팅/소각은 컨트랙트 소유자만 가능 (컨트랙트 `onlyOwner`)
 3. **네트워크**: 기본적으로 Avalanche 테스트넷 사용
 4. **에러 처리**: 모든 블록체인 상호작용에 try-catch 적용

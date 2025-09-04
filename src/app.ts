@@ -12,6 +12,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import nftRouter from "./routes/nft";
+import v1Router from "./routes/v1";
 import { errorHandler } from "./middleware/errorHandler";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
@@ -53,6 +54,7 @@ app.get("/health", (_req, res) => {
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
 app.use("/api/nft", nftRouter);
+app.use("/v1", v1Router);
 
 // 전역 에러 핸들러 (항상 라우터 다음에 위치)
 app.use(errorHandler);
