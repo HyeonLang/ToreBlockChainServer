@@ -208,7 +208,79 @@ export async function burnNftController(req: Request, res: Response) {
 }
 
 /**
- * NFT 조회 컨트롤러
+ * 지갑의 모든 NFT 조회 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 쿼리 파라미터에서 walletAddress 추출
+ * 2. 필수 파라미터 검증
+ * 3. 블록체인 컨트랙트 인스턴스 생성
+ * 4. balanceOf로 소유한 NFT 개수 조회
+ * 5. 각 NFT의 정보를 순회하며 조회
+ * 6. NFT 정보 배열 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { nfts: Array<{tokenId: number, owner: string, tokenURI: string}> } - NFT 정보 배열
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function getWalletNftsController(req: Request, res: Response) {
+  try {
+    // 쿼리 파라미터에서 walletAddress 추출
+    const { walletAddress } = req.query;
+    
+    // 필수 파라미터 및 형식 검증
+    if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+
+    // 블록체인 컨트랙트 인스턴스 생성
+    const contract = await getContract();
+    
+    // 지갑이 소유한 NFT 개수 조회
+    const balance = await contract.balanceOf(walletAddress);
+    const balanceNum = Number(balance);
+    
+    if (balanceNum === 0) {
+      return res.json({ nfts: [] });
+    }
+
+    // 각 NFT의 정보를 조회
+    const nfts = [];
+    for (let i = 0; i < balanceNum; i++) {
+      try {
+        // tokenOfOwnerByIndex로 i번째 NFT의 tokenId 조회
+        const tokenId = await contract.tokenOfOwnerByIndex(walletAddress, i);
+        const tokenIdNum = Number(tokenId);
+        
+        // 해당 NFT의 소유자와 URI 조회
+        const [owner, tokenURI] = await Promise.all([
+          contract.ownerOf(tokenId),
+          contract.tokenURI(tokenId)
+        ]);
+        
+        nfts.push({
+          tokenId: tokenIdNum,
+          owner: owner,
+          tokenURI: tokenURI
+        });
+      } catch (err) {
+        console.warn(`Failed to get NFT at index ${i}:`, err);
+        // 개별 NFT 조회 실패 시 무시하고 계속 진행
+      }
+    }
+    
+    // NFT 정보 배열 반환
+    return res.json({ nfts });
+  } catch (err: any) {
+    // 에러 처리 및 500 상태코드로 응답
+    console.error('[getWalletNfts] error:', err);
+    return res.status(500).json({ error: err.message || "Wallet NFTs query failed" });
+  }
+}
+
+/**
+ * NFT 개별 조회 컨트롤러
  * 
  * 실행 흐름:
  * 1. URL 파라미터에서 tokenId 추출

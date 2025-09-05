@@ -63,7 +63,15 @@ class NFTMinter {
                 infoBtnLoading: document.getElementById('infoBtnLoading'),
                 nftInfo: document.getElementById('nftInfo'),
                 nftOwner: document.getElementById('nftOwner'),
-                nftTokenURI: document.getElementById('nftTokenURI')
+                nftTokenURI: document.getElementById('nftTokenURI'),
+                
+                walletForm: document.getElementById('walletForm'),
+                walletQueryAddress: document.getElementById('walletQueryAddress'),
+                walletBtn: document.getElementById('walletBtn'),
+                walletBtnText: document.getElementById('walletBtnText'),
+                walletBtnLoading: document.getElementById('walletBtnLoading'),
+                walletNfts: document.getElementById('walletNfts'),
+                walletNftsList: document.getElementById('walletNftsList')
             };
 
             // 이벤트 리스너 등록
@@ -74,12 +82,35 @@ class NFTMinter {
             this.elements.transferForm.addEventListener('submit', (e) => this.handleTransfer(e));
             this.elements.deleteForm.addEventListener('submit', (e) => this.handleDelete(e));
             this.elements.infoForm.addEventListener('submit', (e) => this.handleInfo(e));
+            this.elements.walletForm.addEventListener('submit', (e) => this.handleWallet(e));
+            
+            // 서버 상태 확인
+            await this.checkServerStatus();
             
             // 컨트랙트 주소 가져오기
             await this.getContractAddress().catch(() => {});
             
         } catch (error) {
             this.showStatus('초기화 중 오류가 발생했습니다: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * 서버 상태 확인
+     */
+    async checkServerStatus() {
+        try {
+            const response = await fetch('/health');
+            const data = await response.json();
+            
+            if (data.ok) {
+                this.log('서버 연결 상태: 정상');
+            } else {
+                this.showStatus('서버 상태를 확인할 수 없습니다.', 'error');
+            }
+        } catch (error) {
+            this.showStatus('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.', 'error');
+            this.log('Server health check failed: ' + error.message);
         }
     }
 
@@ -94,10 +125,12 @@ class NFTMinter {
             if (data.address) {
                 this.contractAddress = data.address;
                 console.log('컨트랙트 주소:', this.contractAddress);
+                this.log('컨트랙트 주소: ' + this.contractAddress);
             } else {
                 throw new Error('컨트랙트 주소를 가져올 수 없습니다.');
             }
         } catch (error) {
+            this.showStatus('컨트랙트 주소를 가져올 수 없습니다: ' + error.message, 'error');
             throw new Error('서버 연결 실패: ' + error.message);
         }
     }
@@ -137,6 +170,7 @@ class NFTMinter {
             // 받는 주소 필드에 연결된 주소 자동 입력
             this.elements.recipientAddress.value = address;
             this.elements.transferFrom.value = address;
+            this.elements.walletQueryAddress.value = address;
             
             // 예시 토큰 URI 설정
             if (!this.elements.tokenURI.value) {
@@ -176,9 +210,19 @@ class NFTMinter {
             this.log('Create NFT response: ' + JSON.stringify(data));
 
             if (!response.ok) {
+                let errorMessage = 'NFT 생성 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 입력값을 확인해주세요.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
                 return {
                     success: false,
-                    error: data.error || 'NFT 생성 실패'
+                    error: errorMessage
                 };
             }
 
@@ -190,9 +234,10 @@ class NFTMinter {
             };
 
         } catch (error) {
+            this.log('Network error: ' + error.message);
             return {
                 success: false,
-                error: error && error.message ? error.message : String(error)
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
             };
         }
     }
@@ -221,9 +266,21 @@ class NFTMinter {
             this.log('Transfer NFT response: ' + JSON.stringify(data));
 
             if (!response.ok) {
+                let errorMessage = 'NFT 전송 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 입력값을 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 NFT를 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
                 return {
                     success: false,
-                    error: data.error || 'NFT 전송 실패'
+                    error: errorMessage
                 };
             }
 
@@ -233,9 +290,10 @@ class NFTMinter {
             };
 
         } catch (error) {
+            this.log('Network error: ' + error.message);
             return {
                 success: false,
-                error: error && error.message ? error.message : String(error)
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
             };
         }
     }
@@ -262,9 +320,21 @@ class NFTMinter {
             this.log('Delete NFT response: ' + JSON.stringify(data));
 
             if (!response.ok) {
+                let errorMessage = 'NFT 삭제 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 입력값을 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 NFT를 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
                 return {
                     success: false,
-                    error: data.error || 'NFT 삭제 실패'
+                    error: errorMessage
                 };
             }
 
@@ -274,9 +344,10 @@ class NFTMinter {
             };
 
         } catch (error) {
+            this.log('Network error: ' + error.message);
             return {
                 success: false,
-                error: error && error.message ? error.message : String(error)
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
             };
         }
     }
@@ -297,9 +368,21 @@ class NFTMinter {
             this.log('Get NFT info response: ' + JSON.stringify(data));
 
             if (!response.ok) {
+                let errorMessage = 'NFT 정보 조회 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 토큰 ID를 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 NFT를 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
                 return {
                     success: false,
-                    error: data.error || 'NFT 정보 조회 실패'
+                    error: errorMessage
                 };
             }
 
@@ -310,9 +393,58 @@ class NFTMinter {
             };
 
         } catch (error) {
+            this.log('Network error: ' + error.message);
             return {
                 success: false,
-                error: error && error.message ? error.message : String(error)
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
+            };
+        }
+    }
+
+    /**
+     * 지갑의 모든 NFT 조회 함수
+     * 
+     * @param {string} walletAddress - 조회할 지갑 주소
+     * @returns {Promise<Object>} 지갑 NFT 목록
+     */
+    async getWalletNFTs(walletAddress) {
+        try {
+            this.log('Getting wallet NFTs... walletAddress=' + walletAddress);
+            
+            const response = await fetch(`/api/nft/wallet?walletAddress=${encodeURIComponent(walletAddress)}`);
+            const data = await response.json();
+            
+            this.log('Get wallet NFTs response: ' + JSON.stringify(data));
+
+            if (!response.ok) {
+                let errorMessage = '지갑 NFT 조회 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 지갑 주소를 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 지갑을 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
+                return {
+                    success: false,
+                    error: errorMessage
+                };
+            }
+
+            return {
+                success: true,
+                nfts: data.nfts || []
+            };
+
+        } catch (error) {
+            this.log('Network error: ' + error.message);
+            return {
+                success: false,
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
             };
         }
     }
@@ -334,8 +466,17 @@ class NFTMinter {
                 return;
             }
 
+            // 주소 형식 검증
             if (typeof ethers !== 'undefined' && ethers.utils && !ethers.utils.isAddress(to)) {
-                this.showStatus('올바른 지갑 주소를 입력해주세요.', 'error');
+                this.showStatus('올바른 지갑 주소를 입력해주세요. (0x로 시작하는 42자리 주소)', 'error');
+                return;
+            }
+
+            // URI 형식 검증
+            try {
+                new URL(tokenURI);
+            } catch {
+                this.showStatus('올바른 URL 형식을 입력해주세요. (https:// 또는 ipfs://)', 'error');
                 return;
             }
 
@@ -383,19 +524,28 @@ class NFTMinter {
                 return;
             }
 
+            // 주소 형식 검증
             if (typeof ethers !== 'undefined' && ethers.utils) {
                 if (!ethers.utils.isAddress(from)) {
-                    this.showStatus('올바른 보내는 주소를 입력해주세요.', 'error');
+                    this.showStatus('올바른 보내는 주소를 입력해주세요. (0x로 시작하는 42자리 주소)', 'error');
                     return;
                 }
                 if (!ethers.utils.isAddress(to)) {
-                    this.showStatus('올바른 받는 주소를 입력해주세요.', 'error');
+                    this.showStatus('올바른 받는 주소를 입력해주세요. (0x로 시작하는 42자리 주소)', 'error');
                     return;
                 }
             }
 
-            if (isNaN(Number(tokenId)) || Number(tokenId) < 0) {
-                this.showStatus('올바른 토큰 ID를 입력해주세요.', 'error');
+            // 토큰 ID 검증
+            const tokenIdNum = Number(tokenId);
+            if (isNaN(tokenIdNum) || tokenIdNum < 0 || !Number.isInteger(tokenIdNum)) {
+                this.showStatus('올바른 토큰 ID를 입력해주세요. (0 이상의 정수)', 'error');
+                return;
+            }
+
+            // 같은 주소로 전송하는지 확인
+            if (from.toLowerCase() === to.toLowerCase()) {
+                this.showStatus('보내는 주소와 받는 주소가 같습니다.', 'error');
                 return;
             }
 
@@ -438,8 +588,9 @@ class NFTMinter {
                 return;
             }
 
-            if (isNaN(Number(tokenId)) || Number(tokenId) < 0) {
-                this.showStatus('올바른 토큰 ID를 입력해주세요.', 'error');
+            const tokenIdNum = Number(tokenId);
+            if (isNaN(tokenIdNum) || tokenIdNum < 0 || !Number.isInteger(tokenIdNum)) {
+                this.showStatus('올바른 토큰 ID를 입력해주세요. (0 이상의 정수)', 'error');
                 return;
             }
 
@@ -490,8 +641,9 @@ class NFTMinter {
                 return;
             }
 
-            if (isNaN(Number(tokenId)) || Number(tokenId) < 0) {
-                this.showStatus('올바른 토큰 ID를 입력해주세요.', 'error');
+            const tokenIdNum = Number(tokenId);
+            if (isNaN(tokenIdNum) || tokenIdNum < 0 || !Number.isInteger(tokenIdNum)) {
+                this.showStatus('올바른 토큰 ID를 입력해주세요. (0 이상의 정수)', 'error');
                 return;
             }
 
@@ -522,6 +674,99 @@ class NFTMinter {
         } finally {
             this.setLoading(false, 'info');
         }
+    }
+
+    /**
+     * 지갑 NFT 조회 처리
+     */
+    async handleWallet(event) {
+        event.preventDefault();
+        
+        try {
+            // 폼 데이터 가져오기
+            const walletAddress = this.elements.walletQueryAddress.value.trim();
+
+            // 입력값 검증
+            if (!walletAddress) {
+                this.showStatus('지갑 주소를 입력해주세요.', 'error');
+                return;
+            }
+
+            // 주소 형식 검증
+            if (typeof ethers !== 'undefined' && ethers.utils && !ethers.utils.isAddress(walletAddress)) {
+                this.showStatus('올바른 지갑 주소를 입력해주세요. (0x로 시작하는 42자리 주소)', 'error');
+                return;
+            }
+
+            // 버튼 비활성화 및 로딩 표시
+            this.setLoading(true, 'wallet');
+            this.showStatus('지갑 NFT를 조회합니다...', 'info');
+
+            // 지갑 NFT 조회 함수 호출
+            const walletResult = await this.getWalletNFTs(walletAddress);
+            
+            if (walletResult.success) {
+                this.showStatus(`지갑 NFT 조회 성공! (${walletResult.nfts.length}개 발견)`, 'success');
+                this.log('Wallet success count=' + walletResult.nfts.length);
+                
+                // NFT 목록 표시
+                this.displayWalletNFTs(walletResult.nfts);
+                this.elements.walletNfts.classList.remove('hidden');
+                
+            } else {
+                this.showStatus('지갑 조회 실패: ' + walletResult.error, 'error');
+                this.log('Wallet failed: ' + walletResult.error);
+                this.elements.walletNfts.classList.add('hidden');
+            }
+
+        } catch (error) {
+            this.showStatus('지갑 조회 중 오류가 발생했습니다: ' + error.message, 'error');
+        } finally {
+            this.setLoading(false, 'wallet');
+        }
+    }
+
+    /**
+     * 지갑 NFT 목록 표시
+     */
+    displayWalletNFTs(nfts) {
+        const listElement = this.elements.walletNftsList;
+        listElement.innerHTML = '';
+
+        if (nfts.length === 0) {
+            listElement.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">소유한 NFT가 없습니다.</p>';
+            return;
+        }
+
+        nfts.forEach((nft, index) => {
+            const nftElement = document.createElement('div');
+            nftElement.style.cssText = `
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 10px;
+                font-family: monospace;
+                font-size: 14px;
+            `;
+            
+            nftElement.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong>NFT #${nft.tokenId}</strong>
+                    <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                        ${index + 1}번째
+                    </span>
+                </div>
+                <div style="margin-bottom: 5px;">
+                    <strong>소유자:</strong> ${nft.owner}
+                </div>
+                <div style="word-break: break-all;">
+                    <strong>URI:</strong> ${nft.tokenURI}
+                </div>
+            `;
+            
+            listElement.appendChild(nftElement);
+        });
     }
 
     /**
@@ -582,6 +827,10 @@ class NFTMinter {
             this.elements.infoBtn.disabled = loading;
             this.elements.infoBtnText.style.display = loading ? 'none' : 'inline';
             this.elements.infoBtnLoading.classList.toggle('hidden', !loading);
+        } else if (type === 'wallet') {
+            this.elements.walletBtn.disabled = loading;
+            this.elements.walletBtnText.style.display = loading ? 'none' : 'inline';
+            this.elements.walletBtnLoading.classList.toggle('hidden', !loading);
         }
     }
 

@@ -21,7 +21,8 @@ import {
   contractAddressController, 
   mintNftController, 
   transferNftController,
-  getNftController
+  getNftController,
+  getWalletNftsController
 } from "../controllers/nftController";
 
 // Express 라우터 인스턴스 생성
@@ -73,8 +74,19 @@ router.post("/transfer", transferNftController);
 router.post("/burn", burnNftController);
 
 /**
+ * GET /api/nft/wallet
+ * 지갑의 모든 NFT를 조회하는 엔드포인트
+ * 
+ * 쿼리 파라미터: walletAddress
+ * - walletAddress: 조회할 지갑 주소
+ * 
+ * 응답: { nfts: Array<{tokenId: number, owner: string, tokenURI: string}> }
+ */
+router.get("/wallet", getWalletNftsController);
+
+/**
  * GET /api/nft/:tokenId
- * NFT 정보를 조회하는 엔드포인트
+ * 특정 NFT 정보를 조회하는 엔드포인트
  * 
  * URL 파라미터: tokenId
  * - tokenId: 조회할 NFT의 토큰 ID
