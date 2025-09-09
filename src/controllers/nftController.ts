@@ -329,4 +329,165 @@ export async function getNftController(req: Request, res: Response) {
   }
 }
 
+/**
+ * NFT 거래 이력 조회 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. URL 파라미터에서 tokenId 추출
+ * 2. 필수 파라미터 검증
+ * 3. 블록체인 컨트랙트 인스턴스 생성
+ * 4. Transfer 이벤트 로그 조회
+ * 5. 거래 이력 배열 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { transactions: Array<{from: string, to: string, txHash: string, blockNumber: number, timestamp: number}> } - 거래 이력
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function getNftTransactionHistoryController(req: Request, res: Response) {
+  try {
+    // URL 파라미터에서 tokenId 추출
+    const { tokenId } = req.params;
+    
+    // 필수 파라미터 및 형식 검증
+    if (!tokenId) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numeric = Number(tokenId);
+    if (!Number.isInteger(numeric) || numeric < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    // 블록체인 컨트랙트 인스턴스 생성
+    const contract = await getContract();
+    
+    // Transfer 이벤트 필터 생성 (특정 토큰 ID)
+    const filter = contract.filters.Transfer(null, null, BigInt(tokenId));
+    
+    // 이벤트 로그 조회
+    const logs = await contract.queryFilter(filter);
+    
+    // 거래 이력 배열 생성
+    const transactions = [];
+    for (const log of logs) {
+      try {
+        const parsedLog = contract.interface.parseLog(log);
+        if (parsedLog && parsedLog.name === 'Transfer') {
+          const [from, to, tokenIdFromLog] = parsedLog.args;
+          
+          // 블록 정보 조회
+          const block = await log.getBlock();
+          
+          transactions.push({
+            from: from,
+            to: to,
+            tokenId: Number(tokenIdFromLog),
+            txHash: log.transactionHash,
+            blockNumber: log.blockNumber,
+            timestamp: block.timestamp,
+            type: from === '0x0000000000000000000000000000000000000000' ? 'mint' : 
+                  to === '0x0000000000000000000000000000000000000000' ? 'burn' : 'transfer'
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to parse log:', err);
+        // 개별 로그 파싱 실패 시 무시하고 계속 진행
+      }
+    }
+    
+    // 시간순 정렬 (오래된 것부터)
+    transactions.sort((a, b) => a.blockNumber - b.blockNumber);
+    
+    // 거래 이력 배열 반환
+    return res.json({ 
+      tokenId: numeric,
+      transactions: transactions
+    });
+  } catch (err: any) {
+    // 에러 처리 및 500 상태코드로 응답
+    console.error('[getNftTransactionHistory] error:', err);
+    return res.status(500).json({ error: err.message || "NFT transaction history query failed" });
+  }
+}
+
+/**
+ * 지갑 NFT 거래 이력 조회 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 쿼리 파라미터에서 walletAddress 추출
+ * 2. 필수 파라미터 검증
+ * 3. 블록체인 컨트랙트 인스턴스 생성
+ * 4. Transfer 이벤트 로그 조회 (해당 지갑 관련)
+ * 5. 거래 이력 배열 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { transactions: Array<{from: string, to: string, tokenId: number, txHash: string, blockNumber: number, timestamp: number}> } - 거래 이력
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function getWalletTransactionHistoryController(req: Request, res: Response) {
+  try {
+    // 쿼리 파라미터에서 walletAddress 추출
+    const { walletAddress } = req.query;
+    
+    // 필수 파라미터 및 형식 검증
+    if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+
+    // 블록체인 컨트랙트 인스턴스 생성
+    const contract = await getContract();
+    
+    // Transfer 이벤트 필터 생성 (해당 지갑이 from 또는 to인 경우)
+    const filter = contract.filters.Transfer(walletAddress, walletAddress);
+    
+    // 이벤트 로그 조회
+    const logs = await contract.queryFilter(filter);
+    
+    // 거래 이력 배열 생성
+    const transactions = [];
+    for (const log of logs) {
+      try {
+        const parsedLog = contract.interface.parseLog(log);
+        if (parsedLog && parsedLog.name === 'Transfer') {
+          const [from, to, tokenId] = parsedLog.args;
+          
+          // 블록 정보 조회
+          const block = await log.getBlock();
+          
+          transactions.push({
+            from: from,
+            to: to,
+            tokenId: Number(tokenId),
+            txHash: log.transactionHash,
+            blockNumber: log.blockNumber,
+            timestamp: block.timestamp,
+            type: from === '0x0000000000000000000000000000000000000000' ? 'mint' : 
+                  to === '0x0000000000000000000000000000000000000000' ? 'burn' : 'transfer',
+            direction: from.toLowerCase() === walletAddress.toLowerCase() ? 'sent' : 'received'
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to parse log:', err);
+        // 개별 로그 파싱 실패 시 무시하고 계속 진행
+      }
+    }
+    
+    // 시간순 정렬 (최신 것부터)
+    transactions.sort((a, b) => b.blockNumber - a.blockNumber);
+    
+    // 거래 이력 배열 반환
+    return res.json({ 
+      walletAddress: walletAddress,
+      transactions: transactions
+    });
+  } catch (err: any) {
+    // 에러 처리 및 500 상태코드로 응답
+    console.error('[getWalletTransactionHistory] error:', err);
+    return res.status(500).json({ error: err.message || "Wallet transaction history query failed" });
+  }
+}
+
 

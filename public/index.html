@@ -220,6 +220,110 @@
             font-family: monospace;
             font-size: 14px;
         }
+
+        .transaction-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .transaction-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .transaction-type.mint {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .transaction-type.transfer {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .transaction-type.burn {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .transaction-direction {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .transaction-direction.sent {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .transaction-direction.received {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .transaction-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .transaction-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transaction-detail-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 2px;
+        }
+
+        .transaction-detail-value {
+            color: #212529;
+            word-break: break-all;
+        }
+
+        .transaction-hash {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .transaction-hash:hover {
+            text-decoration: underline;
+        }
+
+        .transaction-time {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .no-transactions {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -240,6 +344,8 @@
             <button class="tab" onclick="switchTab('delete')">삭제</button>
             <button class="tab" onclick="switchTab('info')">개별조회</button>
             <button class="tab" onclick="switchTab('wallet')">지갑조회</button>
+            <button class="tab" onclick="switchTab('nftHistory')">NFT거래이력</button>
+            <button class="tab" onclick="switchTab('walletHistory')">지갑거래이력</button>
         </div>
 
         <!-- NFT 생성 탭 -->
@@ -345,6 +451,11 @@
                 <h4>NFT 정보</h4>
                 <p><strong>소유자:</strong> <span id="nftOwner"></span></p>
                 <p><strong>토큰 URI:</strong> <span id="nftTokenURI"></span></p>
+                <div style="margin-top: 15px;">
+                    <button type="button" id="viewNftHistoryBtn" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                        거래 이력 보기
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -370,6 +481,59 @@
             <div id="walletNfts" class="nft-info hidden">
                 <h4>지갑 NFT 목록</h4>
                 <div id="walletNftsList"></div>
+                <div style="margin-top: 15px;">
+                    <button type="button" id="viewWalletHistoryBtn" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                        거래 이력 보기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NFT 거래 이력 조회 탭 -->
+        <div id="nftHistoryTab" class="tab-content">
+            <form id="nftHistoryForm">
+                <div class="form-group">
+                    <label for="nftHistoryTokenId">NFT 토큰 ID</label>
+                    <input type="number" id="nftHistoryTokenId" placeholder="1" required min="0" step="1">
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        거래 이력을 조회할 NFT의 토큰 ID를 입력하세요
+                    </small>
+                </div>
+
+                <button type="submit" id="nftHistoryBtn" class="btn">
+                    <span id="nftHistoryBtnText">NFT 거래 이력 조회</span>
+                    <span id="nftHistoryBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div id="nftHistoryResult" class="nft-info hidden">
+                <h4>NFT 거래 이력</h4>
+                <div id="nftHistoryList"></div>
+            </div>
+        </div>
+
+        <!-- 지갑 거래 이력 조회 탭 -->
+        <div id="walletHistoryTab" class="tab-content">
+            <form id="walletHistoryForm">
+                <div class="form-group">
+                    <label for="walletHistoryAddress">지갑 주소</label>
+                    <input type="text" id="walletHistoryAddress" placeholder="0x..." required
+                           pattern="^0x[a-fA-F0-9]{40}$" 
+                           title="0x로 시작하는 42자리 이더리움 주소를 입력하세요">
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        거래 이력을 조회할 지갑 주소를 입력하세요
+                    </small>
+                </div>
+
+                <button type="submit" id="walletHistoryBtn" class="btn">
+                    <span id="walletHistoryBtnText">지갑 거래 이력 조회</span>
+                    <span id="walletHistoryBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div id="walletHistoryResult" class="nft-info hidden">
+                <h4>지갑 거래 이력</h4>
+                <div id="walletHistoryList"></div>
             </div>
         </div>
 

@@ -71,7 +71,28 @@ class NFTMinter {
                 walletBtnText: document.getElementById('walletBtnText'),
                 walletBtnLoading: document.getElementById('walletBtnLoading'),
                 walletNfts: document.getElementById('walletNfts'),
-                walletNftsList: document.getElementById('walletNftsList')
+                walletNftsList: document.getElementById('walletNftsList'),
+                
+                // 거래 이력 관련 요소들
+                nftHistoryForm: document.getElementById('nftHistoryForm'),
+                nftHistoryTokenId: document.getElementById('nftHistoryTokenId'),
+                nftHistoryBtn: document.getElementById('nftHistoryBtn'),
+                nftHistoryBtnText: document.getElementById('nftHistoryBtnText'),
+                nftHistoryBtnLoading: document.getElementById('nftHistoryBtnLoading'),
+                nftHistoryResult: document.getElementById('nftHistoryResult'),
+                nftHistoryList: document.getElementById('nftHistoryList'),
+                
+                walletHistoryForm: document.getElementById('walletHistoryForm'),
+                walletHistoryAddress: document.getElementById('walletHistoryAddress'),
+                walletHistoryBtn: document.getElementById('walletHistoryBtn'),
+                walletHistoryBtnText: document.getElementById('walletHistoryBtnText'),
+                walletHistoryBtnLoading: document.getElementById('walletHistoryBtnLoading'),
+                walletHistoryResult: document.getElementById('walletHistoryResult'),
+                walletHistoryList: document.getElementById('walletHistoryList'),
+                
+                // 통합 기능 버튼들
+                viewNftHistoryBtn: document.getElementById('viewNftHistoryBtn'),
+                viewWalletHistoryBtn: document.getElementById('viewWalletHistoryBtn')
             };
 
             // 이벤트 리스너 등록
@@ -83,6 +104,12 @@ class NFTMinter {
             this.elements.deleteForm.addEventListener('submit', (e) => this.handleDelete(e));
             this.elements.infoForm.addEventListener('submit', (e) => this.handleInfo(e));
             this.elements.walletForm.addEventListener('submit', (e) => this.handleWallet(e));
+            this.elements.nftHistoryForm.addEventListener('submit', (e) => this.handleNftHistory(e));
+            this.elements.walletHistoryForm.addEventListener('submit', (e) => this.handleWalletHistory(e));
+            
+            // 통합 기능 버튼 이벤트 리스너
+            this.elements.viewNftHistoryBtn.addEventListener('click', () => this.viewNftHistoryFromInfo());
+            this.elements.viewWalletHistoryBtn.addEventListener('click', () => this.viewWalletHistoryFromWallet());
             
             // 서버 상태 확인
             await this.checkServerStatus();
@@ -171,6 +198,7 @@ class NFTMinter {
             this.elements.recipientAddress.value = address;
             this.elements.transferFrom.value = address;
             this.elements.walletQueryAddress.value = address;
+            this.elements.walletHistoryAddress.value = address;
             
             // 예시 토큰 URI 설정
             if (!this.elements.tokenURI.value) {
@@ -438,6 +466,104 @@ class NFTMinter {
             return {
                 success: true,
                 nfts: data.nfts || []
+            };
+
+        } catch (error) {
+            this.log('Network error: ' + error.message);
+            return {
+                success: false,
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
+            };
+        }
+    }
+
+    /**
+     * NFT 거래 이력 조회 함수
+     * 
+     * @param {string|number} tokenId - 조회할 NFT의 토큰 ID
+     * @returns {Promise<Object>} NFT 거래 이력
+     */
+    async getNftTransactionHistory(tokenId) {
+        try {
+            this.log('Getting NFT transaction history... tokenId=' + tokenId);
+            
+            const response = await fetch(`/api/nft/${tokenId}/history`);
+            const data = await response.json();
+            
+            this.log('Get NFT transaction history response: ' + JSON.stringify(data));
+
+            if (!response.ok) {
+                let errorMessage = 'NFT 거래 이력 조회 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 토큰 ID를 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 NFT를 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
+                return {
+                    success: false,
+                    error: errorMessage
+                };
+            }
+
+            return {
+                success: true,
+                tokenId: data.tokenId,
+                transactions: data.transactions || []
+            };
+
+        } catch (error) {
+            this.log('Network error: ' + error.message);
+            return {
+                success: false,
+                error: '네트워크 연결을 확인해주세요: ' + (error && error.message ? error.message : String(error))
+            };
+        }
+    }
+
+    /**
+     * 지갑 NFT 거래 이력 조회 함수
+     * 
+     * @param {string} walletAddress - 조회할 지갑 주소
+     * @returns {Promise<Object>} 지갑 거래 이력
+     */
+    async getWalletTransactionHistory(walletAddress) {
+        try {
+            this.log('Getting wallet transaction history... walletAddress=' + walletAddress);
+            
+            const response = await fetch(`/api/nft/wallet/history?walletAddress=${encodeURIComponent(walletAddress)}`);
+            const data = await response.json();
+            
+            this.log('Get wallet transaction history response: ' + JSON.stringify(data));
+
+            if (!response.ok) {
+                let errorMessage = '지갑 거래 이력 조회 실패';
+                if (data.error) {
+                    errorMessage = data.error;
+                } else if (data.message) {
+                    errorMessage = data.message;
+                } else if (response.status === 400) {
+                    errorMessage = '잘못된 요청입니다. 지갑 주소를 확인해주세요.';
+                } else if (response.status === 404) {
+                    errorMessage = '해당 지갑을 찾을 수 없습니다.';
+                } else if (response.status === 500) {
+                    errorMessage = '서버 내부 오류가 발생했습니다.';
+                }
+                return {
+                    success: false,
+                    error: errorMessage
+                };
+            }
+
+            return {
+                success: true,
+                walletAddress: data.walletAddress,
+                transactions: data.transactions || []
             };
 
         } catch (error) {
@@ -770,6 +896,277 @@ class NFTMinter {
     }
 
     /**
+     * NFT 거래 이력 처리
+     */
+    async handleNftHistory(event) {
+        event.preventDefault();
+        
+        try {
+            // 폼 데이터 가져오기
+            const tokenId = this.elements.nftHistoryTokenId.value.trim();
+
+            // 입력값 검증
+            if (!tokenId) {
+                this.showStatus('토큰 ID를 입력해주세요.', 'error');
+                return;
+            }
+
+            const tokenIdNum = Number(tokenId);
+            if (isNaN(tokenIdNum) || tokenIdNum < 0 || !Number.isInteger(tokenIdNum)) {
+                this.showStatus('올바른 토큰 ID를 입력해주세요. (0 이상의 정수)', 'error');
+                return;
+            }
+
+            // 버튼 비활성화 및 로딩 표시
+            this.setLoading(true, 'nftHistory');
+            this.showStatus('NFT 거래 이력을 조회합니다...', 'info');
+
+            // NFT 거래 이력 조회 함수 호출
+            const historyResult = await this.getNftTransactionHistory(tokenId);
+            
+            if (historyResult.success) {
+                this.showStatus(`NFT 거래 이력 조회 성공! (${historyResult.transactions.length}건 발견)`, 'success');
+                this.log('NFT History success count=' + historyResult.transactions.length);
+                
+                // 거래 이력 표시
+                this.displayNftTransactionHistory(historyResult.transactions);
+                this.elements.nftHistoryResult.classList.remove('hidden');
+                
+            } else {
+                this.showStatus('거래 이력 조회 실패: ' + historyResult.error, 'error');
+                this.log('NFT History failed: ' + historyResult.error);
+                this.elements.nftHistoryResult.classList.add('hidden');
+            }
+
+        } catch (error) {
+            this.showStatus('거래 이력 조회 중 오류가 발생했습니다: ' + error.message, 'error');
+        } finally {
+            this.setLoading(false, 'nftHistory');
+        }
+    }
+
+    /**
+     * 지갑 거래 이력 처리
+     */
+    async handleWalletHistory(event) {
+        event.preventDefault();
+        
+        try {
+            // 폼 데이터 가져오기
+            const walletAddress = this.elements.walletHistoryAddress.value.trim();
+
+            // 입력값 검증
+            if (!walletAddress) {
+                this.showStatus('지갑 주소를 입력해주세요.', 'error');
+                return;
+            }
+
+            // 주소 형식 검증
+            if (typeof ethers !== 'undefined' && ethers.utils && !ethers.utils.isAddress(walletAddress)) {
+                this.showStatus('올바른 지갑 주소를 입력해주세요. (0x로 시작하는 42자리 주소)', 'error');
+                return;
+            }
+
+            // 버튼 비활성화 및 로딩 표시
+            this.setLoading(true, 'walletHistory');
+            this.showStatus('지갑 거래 이력을 조회합니다...', 'info');
+
+            // 지갑 거래 이력 조회 함수 호출
+            const historyResult = await this.getWalletTransactionHistory(walletAddress);
+            
+            if (historyResult.success) {
+                this.showStatus(`지갑 거래 이력 조회 성공! (${historyResult.transactions.length}건 발견)`, 'success');
+                this.log('Wallet History success count=' + historyResult.transactions.length);
+                
+                // 거래 이력 표시
+                this.displayWalletTransactionHistory(historyResult.transactions);
+                this.elements.walletHistoryResult.classList.remove('hidden');
+                
+            } else {
+                this.showStatus('거래 이력 조회 실패: ' + historyResult.error, 'error');
+                this.log('Wallet History failed: ' + historyResult.error);
+                this.elements.walletHistoryResult.classList.add('hidden');
+            }
+
+        } catch (error) {
+            this.showStatus('거래 이력 조회 중 오류가 발생했습니다: ' + error.message, 'error');
+        } finally {
+            this.setLoading(false, 'walletHistory');
+        }
+    }
+
+    /**
+     * NFT 거래 이력 표시
+     */
+    displayNftTransactionHistory(transactions) {
+        const listElement = this.elements.nftHistoryList;
+        listElement.innerHTML = '';
+
+        if (transactions.length === 0) {
+            listElement.innerHTML = '<p class="no-transactions">거래 이력이 없습니다.</p>';
+            return;
+        }
+
+        transactions.forEach((tx, index) => {
+            const txElement = document.createElement('div');
+            txElement.className = 'transaction-item';
+            
+            const date = new Date(tx.timestamp * 1000);
+            const timeString = date.toLocaleString('ko-KR');
+            
+            txElement.innerHTML = `
+                <div class="transaction-header">
+                    <span class="transaction-type ${tx.type}">${this.getTransactionTypeText(tx.type)}</span>
+                    <span class="transaction-time">${timeString}</span>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">보내는 주소</div>
+                        <div class="transaction-detail-value">${tx.from === '0x0000000000000000000000000000000000000000' ? '시스템 (민팅)' : tx.from}</div>
+                    </div>
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">받는 주소</div>
+                        <div class="transaction-detail-value">${tx.to === '0x0000000000000000000000000000000000000000' ? '시스템 (소각)' : tx.to}</div>
+                    </div>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">토큰 ID</div>
+                        <div class="transaction-detail-value">#${tx.tokenId}</div>
+                    </div>
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">블록 번호</div>
+                        <div class="transaction-detail-value">${tx.blockNumber}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 8px;">
+                    <div class="transaction-detail-label">트랜잭션 해시</div>
+                    <a href="https://testnet.snowtrace.io/tx/${tx.txHash}" target="_blank" class="transaction-hash">
+                        ${tx.txHash}
+                    </a>
+                </div>
+            `;
+            
+            listElement.appendChild(txElement);
+        });
+    }
+
+    /**
+     * 지갑 거래 이력 표시
+     */
+    displayWalletTransactionHistory(transactions) {
+        const listElement = this.elements.walletHistoryList;
+        listElement.innerHTML = '';
+
+        if (transactions.length === 0) {
+            listElement.innerHTML = '<p class="no-transactions">거래 이력이 없습니다.</p>';
+            return;
+        }
+
+        transactions.forEach((tx, index) => {
+            const txElement = document.createElement('div');
+            txElement.className = 'transaction-item';
+            
+            const date = new Date(tx.timestamp * 1000);
+            const timeString = date.toLocaleString('ko-KR');
+            
+            txElement.innerHTML = `
+                <div class="transaction-header">
+                    <span class="transaction-type ${tx.type}">${this.getTransactionTypeText(tx.type)}</span>
+                    <div>
+                        <span class="transaction-direction ${tx.direction}">${tx.direction === 'sent' ? '보냄' : '받음'}</span>
+                        <span class="transaction-time">${timeString}</span>
+                    </div>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">보내는 주소</div>
+                        <div class="transaction-detail-value">${tx.from === '0x0000000000000000000000000000000000000000' ? '시스템 (민팅)' : tx.from}</div>
+                    </div>
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">받는 주소</div>
+                        <div class="transaction-detail-value">${tx.to === '0x0000000000000000000000000000000000000000' ? '시스템 (소각)' : tx.to}</div>
+                    </div>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">토큰 ID</div>
+                        <div class="transaction-detail-value">#${tx.tokenId}</div>
+                    </div>
+                    <div class="transaction-detail">
+                        <div class="transaction-detail-label">블록 번호</div>
+                        <div class="transaction-detail-value">${tx.blockNumber}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 8px;">
+                    <div class="transaction-detail-label">트랜잭션 해시</div>
+                    <a href="https://testnet.snowtrace.io/tx/${tx.txHash}" target="_blank" class="transaction-hash">
+                        ${tx.txHash}
+                    </a>
+                </div>
+            `;
+            
+            listElement.appendChild(txElement);
+        });
+    }
+
+    /**
+     * 거래 타입 텍스트 변환
+     */
+    getTransactionTypeText(type) {
+        switch (type) {
+            case 'mint': return '민팅';
+            case 'transfer': return '전송';
+            case 'burn': return '소각';
+            default: return type;
+        }
+    }
+
+    /**
+     * NFT 정보에서 거래 이력 보기
+     */
+    viewNftHistoryFromInfo() {
+        const tokenId = this.elements.infoTokenId.value.trim();
+        if (!tokenId) {
+            this.showStatus('먼저 NFT 정보를 조회해주세요.', 'error');
+            return;
+        }
+        
+        // NFT 거래 이력 탭으로 전환
+        switchTab('nftHistory');
+        
+        // 토큰 ID 자동 입력
+        this.elements.nftHistoryTokenId.value = tokenId;
+        
+        // 자동으로 거래 이력 조회
+        setTimeout(() => {
+            this.handleNftHistory({ preventDefault: () => {} });
+        }, 100);
+    }
+
+    /**
+     * 지갑 조회에서 거래 이력 보기
+     */
+    viewWalletHistoryFromWallet() {
+        const walletAddress = this.elements.walletQueryAddress.value.trim();
+        if (!walletAddress) {
+            this.showStatus('먼저 지갑 NFT를 조회해주세요.', 'error');
+            return;
+        }
+        
+        // 지갑 거래 이력 탭으로 전환
+        switchTab('walletHistory');
+        
+        // 지갑 주소 자동 입력
+        this.elements.walletHistoryAddress.value = walletAddress;
+        
+        // 자동으로 거래 이력 조회
+        setTimeout(() => {
+            this.handleWalletHistory({ preventDefault: () => {} });
+        }, 100);
+    }
+
+    /**
      * NFT를 지갑에 자동 추가
      */
     async addNFTToWallet(contractAddress, tokenId) {
@@ -831,6 +1228,14 @@ class NFTMinter {
             this.elements.walletBtn.disabled = loading;
             this.elements.walletBtnText.style.display = loading ? 'none' : 'inline';
             this.elements.walletBtnLoading.classList.toggle('hidden', !loading);
+        } else if (type === 'nftHistory') {
+            this.elements.nftHistoryBtn.disabled = loading;
+            this.elements.nftHistoryBtnText.style.display = loading ? 'none' : 'inline';
+            this.elements.nftHistoryBtnLoading.classList.toggle('hidden', !loading);
+        } else if (type === 'walletHistory') {
+            this.elements.walletHistoryBtn.disabled = loading;
+            this.elements.walletHistoryBtnText.style.display = loading ? 'none' : 'inline';
+            this.elements.walletHistoryBtnLoading.classList.toggle('hidden', !loading);
         }
     }
 
