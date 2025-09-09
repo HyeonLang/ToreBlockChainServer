@@ -21,9 +21,12 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트와 완전�
 
 ### 🚀 API 기능
 - **RESTful API**: v1 버전과 하위 호환성 지원
+- **JWT 인증**: Access Token (15분) + Refresh Token (7일) 시스템
 - **API 키 인증**: `x-api-key` 헤더 지원 (선택)
+- **하이브리드 인증**: JWT 또는 API 키 중 하나로 인증 가능
 - **레이트 리미팅**: 인메모리 토큰 버킷 방식 (기본 60req/분)
 - **완전한 CRUD**: 생성, 조회, 전송, 삭제 모든 기능
+- **사용자 관리**: 등록, 로그인, 프로필 관리
 
 ## 🛠️ 기술 스택
 
@@ -33,6 +36,8 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트와 완전�
 - **Express.js** - 웹 서버
 - **Hardhat** - 스마트 컨트랙트 개발
 - **Ethers.js** - 블록체인 상호작용
+- **JWT** - JSON Web Token 인증
+- **bcryptjs** - 비밀번호 해싱
 
 ### 프론트엔드
 - **Vanilla JavaScript** - 순수 JS로 구현
@@ -137,11 +142,101 @@ npm start
 
 ## 🔌 API 사용법
 
+### 🔐 인증 시스템
+
+#### JWT 인증 (권장)
+JWT 토큰을 사용한 사용자 인증 시스템입니다.
+
+**사용자 등록**
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "newuser",
+    "email": "user@example.com",
+    "password": "password123",
+    "role": "user"
+  }'
+```
+
+**로그인**
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "password"
+  }'
+```
+
+**응답 예시**
+```json
+{
+  "success": true,
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 900,
+  "user": {
+    "id": "1",
+    "username": "admin",
+    "email": "admin@tore.com",
+    "role": "admin"
+  }
+}
+```
+
+**토큰 사용**
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://localhost:3000/api/nft/address
+```
+
+**토큰 갱신**
+```bash
+curl -X POST http://localhost:3000/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "YOUR_REFRESH_TOKEN"
+  }'
+```
+
+**프로필 조회**
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://localhost:3000/api/auth/profile
+```
+
+**로그아웃**
+```bash
+curl -X POST http://localhost:3000/api/auth/logout \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+#### API 키 인증 (선택사항)
+기존 API 키 방식도 지원합니다.
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" \
+  http://localhost:3000/api/nft/address
+```
+
 ### v1 API (권장)
 
 #### NFT 생성
 ```bash
-curl -X POST http://localhost:3000/v1/nfts/mint \
+# JWT 인증 사용
+curl -X POST http://localhost:3000/v1/nfts \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
+    "itemInfo": {
+      "tokenURI": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+    }
+  }'
+
+# API 키 인증 사용
+curl -X POST http://localhost:3000/v1/nfts \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-api-key" \
   -d '{
@@ -251,16 +346,20 @@ ToreBlockChainServer/
 │   └── deploy.ts
 ├── src/                      # 백엔드 서버
 │   ├── controllers/          # API 컨트롤러
-│   │   └── nftController.ts
+│   │   ├── nftController.ts  # NFT 관리 컨트롤러
+│   │   └── authController.ts # JWT 인증 컨트롤러
 │   ├── routes/               # API 라우터
 │   │   ├── nft.ts           # 기존 API
-│   │   └── v1.ts            # v1 API
+│   │   ├── v1.ts            # v1 API
+│   │   └── auth.ts          # JWT 인증 API
 │   ├── middleware/           # 미들웨어
 │   │   ├── auth.ts          # API 키 인증
+│   │   ├── jwtAuth.ts       # JWT 인증
 │   │   ├── rateLimit.ts     # 레이트 리미팅
 │   │   └── errorHandler.ts  # 에러 처리
 │   ├── utils/               # 유틸리티
-│   │   └── contract.ts      # 컨트랙트 연결
+│   │   ├── contract.ts      # 컨트랙트 연결
+│   │   └── jwt.ts           # JWT 유틸리티
 │   ├── v1/                  # v1 컨트롤러
 │   │   └── controllers.ts
 │   └── app.ts               # 메인 서버 파일
@@ -303,20 +402,39 @@ contract GameItem is ERC721URIStorage, Ownable {
 
 ## 🛡️ 보안 기능
 
-### API 키 인증
+### JWT 인증 (권장)
+- **Access Token**: 15분 만료, 짧은 생명주기
+- **Refresh Token**: 7일 만료, 토큰 갱신용
+- **비밀키 분리**: Access Token과 Refresh Token 다른 비밀키 사용
+- **사용자 정보**: 토큰에 사용자 ID, 역할, 권한 포함
+- **자동 갱신**: Refresh Token으로 새로운 Access Token 발급
+
+### API 키 인증 (선택사항)
 - `x-api-key` 헤더를 통한 인증
 - 환경변수 `API_KEY`로 설정
 - 선택적 사용 (설정하지 않으면 인증 없이 사용 가능)
+
+### 하이브리드 인증
+- JWT 토큰이 있으면 JWT 인증 우선
+- JWT 토큰이 없으면 API 키 인증 시도
+- 두 방식 중 하나라도 성공하면 접근 허용
+
+### 비밀번호 보안
+- **bcrypt 해싱**: 솔트 라운드 10으로 비밀번호 해싱
+- **안전한 저장**: 해싱된 비밀번호만 데이터베이스 저장
+- **검증**: 로그인 시 bcrypt.compare로 비밀번호 확인
 
 ### 레이트 리미팅
 - 인메모리 토큰 버킷 알고리즘
 - 기본 설정: 60 요청/분
 - 환경변수로 설정 가능
+- IP 주소와 API 키 기반 구분
 
 ### 입력 검증
 - 주소 형식 검증 (0x로 시작하는 42자리)
 - URI 형식 검증 (http, https, ipfs 프로토콜)
 - 토큰 ID 숫자 검증
+- JWT 토큰 형식 및 서명 검증
 
 ## 🌐 네트워크 설정
 
@@ -376,15 +494,38 @@ curl http://localhost:3000/api/nft/address
 
 ## 📝 변경 이력
 
-### v1.1.0 (현재)
+### v1.2.0 (현재)
 - ✅ 완전한 NFT 관리 웹 인터페이스 구현
 - ✅ MetaMask 자동 연결 및 NFT 자동 추가
 - ✅ v1 RESTful API 구현
 - ✅ API 키 인증 및 레이트 리미팅
 - ✅ 지갑 NFT 조회 기능
-- ✅ **NFT 거래 이력 조회 기능** (새로 추가)
-- ✅ **지갑 거래 이력 조회 기능** (새로 추가)
-- ✅ **통합 조회 기능** (새로 추가)
+- ✅ **JWT 인증 시스템** (새로 추가)
+  - Access Token (15분) + Refresh Token (7일)
+  - 사용자 등록, 로그인, 로그아웃
+  - 토큰 갱신 및 프로필 관리
+  - 하이브리드 인증 (JWT + API 키)
+- ✅ **비밀번호 보안** (새로 추가)
+  - bcrypt 해싱 (솔트 라운드 10)
+  - 안전한 비밀번호 저장 및 검증
+- ✅ **상세한 코드 주석** (새로 추가)
+  - 모든 파일에 상세한 주석 추가
+  - 함수별 실행 흐름 설명
+  - 사용 예시 및 에러 처리 가이드
+- ✅ NFT 거래 이력 조회 기능
+- ✅ 지갑 거래 이력 조회 기능
+- ✅ 통합 조회 기능
+- ✅ 반응형 UI/UX 디자인
+
+### v1.1.0
+- ✅ 완전한 NFT 관리 웹 인터페이스 구현
+- ✅ MetaMask 자동 연결 및 NFT 자동 추가
+- ✅ v1 RESTful API 구현
+- ✅ API 키 인증 및 레이트 리미팅
+- ✅ 지갑 NFT 조회 기능
+- ✅ NFT 거래 이력 조회 기능
+- ✅ 지갑 거래 이력 조회 기능
+- ✅ 통합 조회 기능
 - ✅ 반응형 UI/UX 디자인
 
 ## 🤝 기여하기

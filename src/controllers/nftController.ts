@@ -4,7 +4,22 @@
  * 기능:
  * - 블록체인과의 상호작용 처리
  * - NFT 민팅, 전송, 소각, 조회
+ * - NFT 거래 이력 조회
  * - 에러 처리 및 응답 포맷팅
+ * 
+ * 보안 특징:
+ * - JWT 또는 API 키 인증 필요
+ * - 입력값 검증 및 형식 확인
+ * - 블록체인 트랜잭션 에러 처리
+ * 
+ * 사용되는 스마트 컨트랙트 함수:
+ * - mint(address to, string tokenURI) - NFT 생성
+ * - transferFrom(address from, address to, uint256 tokenId) - NFT 전송
+ * - burn(uint256 tokenId) - NFT 소각
+ * - ownerOf(uint256 tokenId) - NFT 소유자 조회
+ * - tokenURI(uint256 tokenId) - NFT 메타데이터 URI 조회
+ * - balanceOf(address owner) - 지갑의 NFT 개수 조회
+ * - tokenOfOwnerByIndex(address owner, uint256 index) - 지갑의 특정 인덱스 NFT 조회
  */
 
 import { Request, Response } from "express";
