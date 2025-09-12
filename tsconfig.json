@@ -1,26 +1,29 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "sourceMap": true
+    // TypeScript 컴파일러 설정
+    "target": "ES2020",                    // 컴파일 대상 JavaScript 버전
+    "module": "commonjs",                  // 모듈 시스템 (CommonJS)
+    "lib": ["ES2020"],                     // 사용할 라이브러리 타입 정의
+    "outDir": "./dist",                    // 컴파일된 파일 출력 디렉토리
+    "rootDir": "./",                       // TypeScript 파일의 루트 디렉토리
+    "strict": true,                        // 엄격한 타입 검사 활성화
+    "esModuleInterop": true,               // ES 모듈과 CommonJS 상호 운용성
+    "skipLibCheck": true,                  // 라이브러리 타입 검사 건너뛰기
+    "forceConsistentCasingInFileNames": true, // 파일명 대소문자 일관성 강제
+    "resolveJsonModule": true,             // JSON 파일을 모듈로 import 허용
+    "sourceMap": true                      // 소스맵 생성 (디버깅용)
   },
   "include": [
-    "src/**/*.ts",
-    "scripts/**/*.ts",
-    "hardhat.config.ts"
+    // 컴파일에 포함할 파일/디렉토리
+    "backend/src/**/*.ts",                 // 백엔드 src 디렉토리의 모든 TypeScript 파일
+    "blockchain/scripts/**/*.ts",          // 블록체인 scripts 디렉토리의 모든 TypeScript 파일
+    "hardhat.config.cjs"                    // Hardhat 설정 파일
   ],
   "exclude": [
-    "node_modules",
-    "dist",
-    "artifacts",
-    "cache"
+    // 컴파일에서 제외할 파일/디렉토리
+    "node_modules",                        // npm 패키지 디렉토리
+    "dist",                                // 컴파일된 출력 디렉토리
+    "blockchain/artifacts",                // Hardhat 아티팩트 디렉토리
+    "blockchain/cache"                     // Hardhat 캐시 디렉토리
   ]
 } 

@@ -19,10 +19,10 @@ const config = {
     avalanche: { url: AVALANCHE_RPC_URL, accounts }
   },
   paths: {
-    sources: "contracts",
-    tests: "test",
-    cache: "cache",
-    artifacts: "artifacts"
+    sources: "blockchain/contracts",
+    tests: "backend/tests",
+    cache: "blockchain/cache",
+    artifacts: "blockchain/artifacts"
   }
 };
 

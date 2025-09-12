@@ -6,20 +6,20 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist cache artifacts typechain",
-    "dev": "tsx watch src/app.ts",
+    "clean": "rimraf dist blockchain/cache blockchain/artifacts typechain",
+    "dev": "tsx watch backend/src/app.ts",
     "start": "node dist/app.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "hh": "hardhat",
     "compile": "hardhat compile",
-    "deploy:fuji": "hardhat run scripts/deploy.ts --network fuji",
-    "deploy:avalanche": "hardhat run scripts/deploy.ts --network avalanche",
-    "deploy:tore:fuji": "hardhat run scripts/deployToreToken.ts --network fuji",
-    "deploy:tore:avalanche": "hardhat run scripts/deployToreToken.ts --network avalanche",
-    "deploy:exchange:fuji": "hardhat run scripts/deployToreExchange.ts --network fuji",
-    "deploy:exchange:avalanche": "hardhat run scripts/deployToreExchange.ts --network avalanche"
+    "deploy:fuji": "hardhat run blockchain/scripts/deploy.ts --network fuji",
+    "deploy:avalanche": "hardhat run blockchain/scripts/deploy.ts --network avalanche",
+    "deploy:tore:fuji": "hardhat run blockchain/scripts/deployToreToken.ts --network fuji",
+    "deploy:tore:avalanche": "hardhat run blockchain/scripts/deployToreToken.ts --network avalanche",
+    "deploy:exchange:fuji": "hardhat run blockchain/scripts/deployToreExchange.ts --network fuji",
+    "deploy:exchange:avalanche": "hardhat run blockchain/scripts/deployToreExchange.ts --network avalanche"
   },
   "engines": {
     "node": ">=18.17"
