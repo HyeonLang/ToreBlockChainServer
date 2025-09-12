@@ -1,22 +1,27 @@
-# 🎨 ToreBlockChainServer - NFT 관리 시스템
+# 🎨 ToreBlockChainServer - NFT & TORE 토큰 관리 시스템
 
-Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트와 완전한 NFT 관리 웹 애플리케이션입니다.
+Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트, ERC20(ToreToken) 컨트랙트, 그리고 완전한 NFT와 TORE 토큰 관리 웹 애플리케이션입니다.
 
 ## ✨ 주요 기능
 
 ### 🖥️ 웹 인터페이스
 - **완전한 NFT 관리 UI**: 생성, 전송, 삭제, 조회를 한 곳에서
+- **TORE 토큰 관리 UI**: 잔액 조회, 전송, 전송 내역 조회
 - **MetaMask 자동 연결**: 지갑 연결 및 주소 자동 입력
 - **자동 NFT 추가**: 민팅 완료 후 지갑에 NFT 자동 추가 (`wallet_watchAsset`)
 - **실시간 상태 표시**: 진행 상황을 실시간으로 표시
 - **거래 이력 조회**: NFT별 및 지갑별 거래 내역 상세 조회
+- **TORE 토큰 전송 내역**: 지갑별 TORE 토큰 전송 내역 조회
 - **통합 기능**: 조회 결과에서 바로 거래 이력 확인 가능
 - **반응형 디자인**: 모바일과 데스크톱 모두 지원
 
 ### 🔗 블록체인 기능
 - **ERC721 표준 준수**: OpenZeppelin 라이브러리 기반
+- **ERC20 표준 준수**: TORE 토큰 (10억개 발행)
 - **URI 저장 기능**: 메타데이터 연결 지원
 - **소유자 권한 관리**: 민팅/소각 권한 제어
+- **게임 통합**: 게임 컨트랙트 및 매니저 관리
+- **거래소 지원**: NFT와 TORE 토큰 간 거래
 - **Avalanche 네트워크**: Fuji 테스트넷 및 메인넷 지원
 
 ### 🚀 API 기능
@@ -68,6 +73,14 @@ RPC_URL=https://api.avax-test.network/ext/bc/C/rpc
 PRIVATE_KEY=0x...
 CONTRACT_ADDRESS=0x...
 
+# TORE 토큰 설정
+TORE_TOKEN_ADDRESS=0x...
+TORE_TOKEN_OWNER=0x...
+
+# 거래소 설정
+TORE_EXCHANGE_ADDRESS=0x...
+TORE_EXCHANGE_OWNER=0x...
+
 # 서버 설정
 PORT=3000
 NODE_ENV=development
@@ -88,6 +101,18 @@ npm run deploy:fuji
 
 # Avalanche 메인넷 배포
 npm run deploy:avalanche
+
+# TORE 토큰 배포 (Fuji 테스트넷)
+npm run deploy:tore:fuji
+
+# TORE 토큰 배포 (Avalanche 메인넷)
+npm run deploy:tore:avalanche
+
+# 거래소 배포 (Fuji 테스트넷)
+npm run deploy:exchange:fuji
+
+# 거래소 배포 (Avalanche 메인넷)
+npm run deploy:exchange:avalanche
 ```
 
 ### 4. 서버 실행
@@ -139,6 +164,23 @@ npm start
 - **NFT 거래 이력**: 특정 NFT의 모든 거래 내역 조회
 - **지갑 거래 이력**: 특정 지갑의 모든 NFT 거래 내역 조회
 - **통합 조회**: 기존 조회 결과에서 바로 거래 이력 확인
+
+### 8. TORE 토큰 관리
+1. **TORE 잔액 조회**
+   - TORE잔액 탭 선택
+   - 지갑 주소 입력 (연결된 지갑 주소가 자동 입력됨)
+   - "TORE 잔액 조회" 버튼 클릭
+
+2. **TORE 토큰 전송**
+   - TORE전송 탭 선택
+   - 받는 주소와 전송할 TORE 양 입력
+   - "TORE 전송하기" 버튼 클릭
+   - MetaMask에서 트랜잭션 승인
+
+3. **TORE 전송 내역 조회**
+   - TORE내역 탭 선택
+   - 지갑 주소 입력 (연결된 지갑 주소가 자동 입력됨)
+   - "TORE 전송 내역 조회" 버튼 클릭
 
 ## 🔌 API 사용법
 
@@ -284,6 +326,78 @@ curl http://localhost:3000/api/nft/1/history
 curl "http://localhost:3000/api/nft/wallet/history?walletAddress=0x1234567890abcdef1234567890abcdef12345678"
 ```
 
+### TORE 토큰 API
+
+#### TORE 잔액 조회
+```bash
+curl http://localhost:3000/api/tore/balance/0x1234567890abcdef1234567890abcdef12345678
+```
+
+#### TORE 토큰 전송
+```bash
+curl -X POST http://localhost:3000/api/tore/transfer \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "to": "0x2222222222222222222222222222222222222222",
+    "amount": "100.0"
+  }'
+```
+
+#### TORE 토큰 민팅
+```bash
+curl -X POST http://localhost:3000/api/tore/mint \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "to": "0x1234567890abcdef1234567890abcdef12345678",
+    "amount": "1000.0"
+  }'
+```
+
+#### TORE 토큰 정보 조회
+```bash
+curl http://localhost:3000/api/tore/info
+```
+
+#### TORE 전송 내역 조회
+```bash
+curl http://localhost:3000/api/tore/history/0x1234567890abcdef1234567890abcdef12345678
+```
+
+### 거래소 API
+
+#### 거래 생성
+```bash
+curl -X POST http://localhost:3000/api/exchange/create-trade \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "tokenId": 1,
+    "price": "100.0"
+  }'
+```
+
+#### NFT 구매
+```bash
+curl -X POST http://localhost:3000/api/exchange/buy-nft \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "tradeId": 1
+  }'
+```
+
+#### 활성 거래 목록 조회
+```bash
+curl "http://localhost:3000/api/exchange/active-trades?offset=0&limit=20"
+```
+
+#### 거래소 통계 조회
+```bash
+curl http://localhost:3000/api/exchange/stats
+```
+
 ### 기존 API (하위 호환)
 
 #### NFT 생성
@@ -341,17 +455,25 @@ curl "http://localhost:3000/api/nft/wallet/history?walletAddress=0x1234567890abc
 ```
 ToreBlockChainServer/
 ├── contracts/                 # 스마트 컨트랙트
-│   └── GameItem.sol          # ERC721 NFT 컨트랙트
+│   ├── GameItem.sol          # ERC721 NFT 컨트랙트
+│   ├── ToreToken.sol         # ERC20 TORE 토큰 컨트랙트
+│   └── ToreExchange.sol      # NFT-TORE 거래소 컨트랙트
 ├── scripts/                  # 배포 스크립트
-│   └── deploy.ts
+│   ├── deploy.ts             # NFT 컨트랙트 배포
+│   ├── deployToreToken.ts    # TORE 토큰 배포
+│   └── deployToreExchange.ts # 거래소 배포
 ├── src/                      # 백엔드 서버
 │   ├── controllers/          # API 컨트롤러
 │   │   ├── nftController.ts  # NFT 관리 컨트롤러
-│   │   └── authController.ts # JWT 인증 컨트롤러
+│   │   ├── authController.ts # JWT 인증 컨트롤러
+│   │   ├── toreTokenController.ts # TORE 토큰 컨트롤러
+│   │   └── exchangeController.ts  # 거래소 컨트롤러
 │   ├── routes/               # API 라우터
-│   │   ├── nft.ts           # 기존 API
+│   │   ├── nft.ts           # NFT API
 │   │   ├── v1.ts            # v1 API
-│   │   └── auth.ts          # JWT 인증 API
+│   │   ├── auth.ts          # JWT 인증 API
+│   │   ├── toreToken.ts     # TORE 토큰 API
+│   │   └── exchange.ts      # 거래소 API
 │   ├── middleware/           # 미들웨어
 │   │   ├── auth.ts          # API 키 인증
 │   │   ├── jwtAuth.ts       # JWT 인증
@@ -359,14 +481,16 @@ ToreBlockChainServer/
 │   │   └── errorHandler.ts  # 에러 처리
 │   ├── utils/               # 유틸리티
 │   │   ├── contract.ts      # 컨트랙트 연결
-│   │   └── jwt.ts           # JWT 유틸리티
+│   │   ├── jwt.ts           # JWT 유틸리티
+│   │   └── toreToken.ts     # TORE 토큰 유틸리티
 │   ├── v1/                  # v1 컨트롤러
 │   │   └── controllers.ts
 │   └── app.ts               # 메인 서버 파일
 ├── public/                   # 프론트엔드 파일
 │   ├── index.html           # 메인 웹 페이지
 │   └── js/
-│       └── nft.js           # NFT 관련 JavaScript
+│       ├── nft.js           # NFT 관련 JavaScript
+│       └── toreToken.js     # TORE 토큰 관련 JavaScript
 ├── artifacts/               # 컴파일된 컨트랙트
 ├── cache/                   # Hardhat 캐시
 ├── dist/                    # 빌드된 서버 파일
@@ -394,11 +518,54 @@ contract GameItem is ERC721URIStorage, Ownable {
 }
 ```
 
+### ToreToken.sol
+```solidity
+contract ToreToken is ERC20, Ownable {
+    uint256 private constant INITIAL_SUPPLY = 1000000000 * 10**18; // 10억개
+    
+    // 토큰 민팅 (소유자만 가능)
+    function mint(address to, uint256 amount) external onlyOwner
+    
+    // 게임 보상 지급
+    function distributeGameReward(address player, uint256 amount) external
+    
+    // 거래소 전송 (거래소 컨트랙트만 가능)
+    function exchangeTransfer(address from, address to, uint256 amount) external
+}
+```
+
+### ToreExchange.sol
+```solidity
+contract ToreExchange is Ownable, ReentrancyGuard {
+    struct Trade {
+        address seller;
+        address buyer;
+        uint256 tokenId;
+        uint256 price;
+        bool isActive;
+        uint256 createdAt;
+        uint256 completedAt;
+    }
+    
+    // 거래 생성
+    function createTrade(uint256 tokenId, uint256 price) external
+    
+    // NFT 구매
+    function buyNFT(uint256 tradeId) external
+    
+    // 거래 취소
+    function cancelTrade(uint256 tradeId) external
+}
+```
+
 ### 주요 특징
 - **ERC721 표준**: OpenZeppelin의 ERC721URIStorage 상속
+- **ERC20 표준**: OpenZeppelin의 ERC20 상속 (TORE 토큰)
 - **URI 저장**: 각 NFT의 메타데이터 URI 저장
 - **소유자 권한**: 민팅과 소각은 컨트랙트 소유자만 가능
 - **자동 ID 관리**: 토큰 ID 자동 증가 (1부터 시작)
+- **게임 통합**: 게임 컨트랙트 및 매니저 관리
+- **거래소 기능**: NFT와 TORE 토큰 간 거래 지원
 
 ## 🛡️ 보안 기능
 
@@ -494,21 +661,44 @@ curl http://localhost:3000/api/nft/address
 
 ## 📝 변경 이력
 
-### v1.2.0 (현재)
+### v1.3.0 (현재)
+- ✅ **TORE 토큰 시스템** (새로 추가)
+  - ERC20 표준 TORE 토큰 (10억개 발행)
+  - 토큰 잔액 조회, 전송, 민팅, 소각
+  - 게임 보상 지급 및 배치 전송
+  - 게임 컨트랙트 및 매니저 관리
+  - 거래소 컨트랙트 관리
+  - 지갑별 전송 내역 조회
+- ✅ **NFT-TORE 거래소** (새로 추가)
+  - NFT를 TORE 토큰으로 판매
+  - TORE 토큰으로 NFT 구매
+  - 거래 생성, 구매, 취소 기능
+  - 거래 내역 관리 및 통계
+  - 거래 수수료 관리 (기본 2.5%)
+- ✅ **프론트엔드 업데이트** (새로 추가)
+  - TORE 토큰 관리 UI 추가
+  - TORE 잔액 조회, 전송, 내역 조회
+  - MetaMask 연동 및 자동 주소 입력
+  - 반응형 디자인 및 사용자 친화적 인터페이스
+- ✅ **백엔드 API 확장** (새로 추가)
+  - TORE 토큰 관련 API 엔드포인트
+  - 거래소 관련 API 엔드포인트
+  - JWT 인증 및 API 키 인증 지원
+  - 상세한 에러 처리 및 로깅
 - ✅ 완전한 NFT 관리 웹 인터페이스 구현
 - ✅ MetaMask 자동 연결 및 NFT 자동 추가
 - ✅ v1 RESTful API 구현
 - ✅ API 키 인증 및 레이트 리미팅
 - ✅ 지갑 NFT 조회 기능
-- ✅ **JWT 인증 시스템** (새로 추가)
+- ✅ **JWT 인증 시스템**
   - Access Token (15분) + Refresh Token (7일)
   - 사용자 등록, 로그인, 로그아웃
   - 토큰 갱신 및 프로필 관리
   - 하이브리드 인증 (JWT + API 키)
-- ✅ **비밀번호 보안** (새로 추가)
+- ✅ **비밀번호 보안**
   - bcrypt 해싱 (솔트 라운드 10)
   - 안전한 비밀번호 저장 및 검증
-- ✅ **상세한 코드 주석** (새로 추가)
+- ✅ **상세한 코드 주석**
   - 모든 파일에 상세한 주석 추가
   - 함수별 실행 흐름 설명
   - 사용 예시 및 에러 처리 가이드

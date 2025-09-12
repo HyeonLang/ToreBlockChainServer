@@ -15,7 +15,11 @@
     "hh": "hardhat",
     "compile": "hardhat compile",
     "deploy:fuji": "hardhat run scripts/deploy.ts --network fuji",
-    "deploy:avalanche": "hardhat run scripts/deploy.ts --network avalanche"
+    "deploy:avalanche": "hardhat run scripts/deploy.ts --network avalanche",
+    "deploy:tore:fuji": "hardhat run scripts/deployToreToken.ts --network fuji",
+    "deploy:tore:avalanche": "hardhat run scripts/deployToreToken.ts --network avalanche",
+    "deploy:exchange:fuji": "hardhat run scripts/deployToreExchange.ts --network fuji",
+    "deploy:exchange:avalanche": "hardhat run scripts/deployToreExchange.ts --network avalanche"
   },
   "engines": {
     "node": ">=18.17"

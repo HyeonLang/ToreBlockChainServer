@@ -329,8 +329,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨 NFT 관리 시스템</h1>
-            <p>NFT 생성, 전송, 삭제를 한 곳에서 관리하세요</p>
+            <h1>🎨 ToreBlockChainServer</h1>
+            <p>NFT와 TORE 토큰을 한 곳에서 관리하세요</p>
         </div>
 
         <div id="walletInfo" class="wallet-info hidden">
@@ -339,11 +339,14 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('create')">생성</button>
-            <button class="tab" onclick="switchTab('transfer')">전송</button>
-            <button class="tab" onclick="switchTab('delete')">삭제</button>
-            <button class="tab" onclick="switchTab('info')">개별조회</button>
-            <button class="tab" onclick="switchTab('wallet')">지갑조회</button>
+            <button class="tab active" onclick="switchTab('create')">NFT생성</button>
+            <button class="tab" onclick="switchTab('transfer')">NFT전송</button>
+            <button class="tab" onclick="switchTab('delete')">NFT삭제</button>
+            <button class="tab" onclick="switchTab('info')">NFT조회</button>
+            <button class="tab" onclick="switchTab('wallet')">지갑NFT</button>
+            <button class="tab" onclick="switchTab('toreBalance')">TORE잔액</button>
+            <button class="tab" onclick="switchTab('toreTransfer')">TORE전송</button>
+            <button class="tab" onclick="switchTab('toreHistory')">TORE내역</button>
             <button class="tab" onclick="switchTab('nftHistory')">NFT거래이력</button>
             <button class="tab" onclick="switchTab('walletHistory')">지갑거래이력</button>
         </div>
@@ -537,12 +540,89 @@
             </div>
         </div>
 
+        <!-- TORE 토큰 잔액 조회 탭 -->
+        <div id="toreBalanceTab" class="tab-content">
+            <form id="toreBalanceForm">
+                <div class="form-group">
+                    <label for="toreBalanceAddress">지갑 주소</label>
+                    <input type="text" id="toreBalanceAddress" placeholder="0x..." required
+                           pattern="^0x[a-fA-F0-9]{40}$" 
+                           title="0x로 시작하는 42자리 이더리움 주소를 입력하세요">
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        TORE 토큰 잔액을 조회할 지갑 주소를 입력하세요
+                    </small>
+                </div>
+
+                <button type="submit" id="toreBalanceBtn" class="btn">
+                    <span id="toreBalanceBtnText">TORE 잔액 조회</span>
+                    <span id="toreBalanceBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div id="toreBalanceResult" class="nft-info hidden">
+                <h4>TORE 토큰 잔액</h4>
+                <p><strong>주소:</strong> <span id="toreBalanceWalletAddress"></span></p>
+                <p><strong>잔액:</strong> <span id="toreBalanceAmount"></span> TORE</p>
+            </div>
+        </div>
+
+        <!-- TORE 토큰 전송 탭 -->
+        <div id="toreTransferTab" class="tab-content">
+            <form id="toreTransferForm">
+                <div class="form-group">
+                    <label for="toreTransferTo">받는 주소</label>
+                    <input type="text" id="toreTransferTo" placeholder="0x..." required
+                           pattern="^0x[a-fA-F0-9]{40}$" 
+                           title="0x로 시작하는 42자리 이더리움 주소를 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="toreTransferAmount">전송할 TORE 양</label>
+                    <input type="number" id="toreTransferAmount" placeholder="100" required min="0" step="0.000001">
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        0 이상의 숫자를 입력하세요 (소수점 6자리까지)
+                    </small>
+                </div>
+
+                <button type="submit" id="toreTransferBtn" class="btn">
+                    <span id="toreTransferBtnText">TORE 전송하기</span>
+                    <span id="toreTransferBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- TORE 토큰 전송 내역 조회 탭 -->
+        <div id="toreHistoryTab" class="tab-content">
+            <form id="toreHistoryForm">
+                <div class="form-group">
+                    <label for="toreHistoryAddress">지갑 주소</label>
+                    <input type="text" id="toreHistoryAddress" placeholder="0x..." required
+                           pattern="^0x[a-fA-F0-9]{40}$" 
+                           title="0x로 시작하는 42자리 이더리움 주소를 입력하세요">
+                    <small style="color: #666; font-size: 0.9rem; margin-top: 5px; display: block;">
+                        TORE 토큰 전송 내역을 조회할 지갑 주소를 입력하세요
+                    </small>
+                </div>
+
+                <button type="submit" id="toreHistoryBtn" class="btn">
+                    <span id="toreHistoryBtnText">TORE 전송 내역 조회</span>
+                    <span id="toreHistoryBtnLoading" class="loading hidden"></span>
+                </button>
+            </form>
+
+            <div id="toreHistoryResult" class="nft-info hidden">
+                <h4>TORE 토큰 전송 내역</h4>
+                <div id="toreHistoryList"></div>
+            </div>
+        </div>
+
         <div id="status" class="status hidden"></div>
         <div id="logPanel" class="status info" style="margin-top:12px; max-height:180px; overflow:auto;"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
     <script src="js/nft.js"></script>
+    <script src="js/toreToken.js"></script>
     <script>
         function switchTab(tabName) {
             // 모든 탭과 콘텐츠 비활성화
