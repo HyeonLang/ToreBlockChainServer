@@ -13,6 +13,8 @@ class WalletManager {
         this.currentAccount = null;
         this.provider = null;
         this.signer = null;
+        this.isConnected = false;
+        this.onConnectionChange = null; // 연결 상태 변경 콜백
         this.init();
     }
 
@@ -68,15 +70,24 @@ class WalletManager {
      * 계정 변경 처리
      */
     handleAccountsChanged(accounts) {
+        const wasConnected = this.isConnected;
+        
         if (accounts.length > 0) {
             this.currentAccount = accounts[0];
+            this.isConnected = true;
             this.updateWalletInfo();
             Utils.autoFillWalletAddress(this.currentAccount);
             Utils.showStatus('지갑 계정이 변경되었습니다.', 'info', 3000);
         } else {
             this.currentAccount = null;
+            this.isConnected = false;
             this.hideWalletInfo();
             Utils.showStatus('지갑 연결이 해제되었습니다.', 'info', 3000);
+        }
+        
+        // 연결 상태 변경 콜백 호출
+        if (this.onConnectionChange && wasConnected !== this.isConnected) {
+            this.onConnectionChange(this.isConnected);
         }
     }
 
@@ -116,6 +127,7 @@ class WalletManager {
             this.provider = new ethers.providers.Web3Provider(window.ethereum);
             this.signer = this.provider.getSigner();
             this.currentAccount = accounts[0];
+            this.isConnected = true;
             
             // 연결된 주소 표시
             this.updateWalletInfo();
@@ -125,6 +137,11 @@ class WalletManager {
             const tokenURI = document.getElementById('tokenURI');
             if (tokenURI && !tokenURI.value) {
                 tokenURI.value = 'https://ipfs.io/ipfs/QmYourMetadataHash';
+            }
+            
+            // 연결 상태 변경 콜백 호출
+            if (this.onConnectionChange) {
+                this.onConnectionChange(true);
             }
             
             Utils.showStatus('지갑이 성공적으로 연결되었습니다!', 'success');
@@ -222,6 +239,7 @@ class WalletManager {
             return null;
         }
     }
+
 }
 
 // 전역에서 사용할 수 있도록 window 객체에 추가
