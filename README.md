@@ -4,16 +4,8 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트, ERC20(Tor
 
 ## ✨ 주요 기능
 
-### 🖥️ 웹 인터페이스
-- **완전한 NFT 관리 UI**: 생성, 전송, 삭제, 조회를 한 곳에서
-- **TORE 토큰 관리 UI**: 잔액 조회, 전송, 전송 내역 조회
-- **MetaMask 자동 연결**: 지갑 연결 및 주소 자동 입력
-- **자동 NFT 추가**: 민팅 완료 후 지갑에 NFT 자동 추가 (`wallet_watchAsset`)
-- **실시간 상태 표시**: 진행 상황을 실시간으로 표시
-- **거래 이력 조회**: NFT별 및 지갑별 거래 내역 상세 조회
-- **TORE 토큰 전송 내역**: 지갑별 TORE 토큰 전송 내역 조회
-- **통합 기능**: 조회 결과에서 바로 거래 이력 확인 가능
-- **반응형 디자인**: 모바일과 데스크톱 모두 지원
+<img width="1007" height="491" alt="image" src="https://github.com/user-attachments/assets/cc12aef5-c4ca-41a3-8ce8-79984a6a54a4" />
+
 
 ### 🔗 블록체인 기능
 - **ERC721 표준 준수**: OpenZeppelin 라이브러리 기반
