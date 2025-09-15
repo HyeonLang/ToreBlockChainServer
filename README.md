@@ -5,11 +5,13 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트, ERC20(Tor
 ## ✨ 프로젝트 정보
 
 <img width="1007" height="491" alt="image" src="https://github.com/user-attachments/assets/cc12aef5-c4ca-41a3-8ce8-79984a6a54a4" />
+
 | 프로젝트 이름 | 깃허브 링크 |
 |---|---|
-| TORE 메인 서버 프로젝트 | [ToreMainServer](https://github.com/HyeonLang/ToreMainServer) |
-| TORE Unreal 프로젝트 | [UE5_ToreProject](https://github.com/HyeonLang/UE5_ToreProject) |
-| TORE AI 서버 프로젝트 | [ToreAIServer](https://github.com/HyeonLang/ToreAIServer) |
+| **TORE 메인 서버 프로젝트** | [ToreMainServer](https://github.com/HyeonLang/ToreMainServer) |
+| **TORE Unreal 프로젝트** | [UE5_ToreProject](https://github.com/HyeonLang/UE5_ToreProject) |
+| **TORE AI 서버 프로젝트** | [ToreAIServer](https://github.com/HyeonLang/ToreAIServer) |
+| **TORE BlockChain 서버 프로젝트** | [ToreBlockChainServer](https://github.com/HyeonLang/ToreBlockChainServer) |
 
 
 ### 🔗 블록체인 기능
