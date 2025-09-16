@@ -31,13 +31,13 @@ import {
 const router = Router();
 
 /**
- * GET /api/nft/address
+ * GET /api/nft/contract-address
  * NFT 컨트랙트 주소를 조회하는 엔드포인트
  * 
  * 요청: 없음
  * 응답: { address: string | null }
  */
-router.get("/address", contractAddressController);
+router.get("/contract-address", contractAddressController);
 
 /**
  * POST /api/nft/mint

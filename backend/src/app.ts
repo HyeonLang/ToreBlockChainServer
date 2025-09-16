@@ -13,11 +13,10 @@ import express from "express";
 import dotenv from "dotenv";
 import nftRouter from "./routes/nft";
 import v1Router from "./routes/v1";
-import authRouter from "./routes/auth";
 import toreTokenRouter from "./routes/toreToken";
 import exchangeRouter from "./routes/exchange";
 import { errorHandler } from "./middleware/errorHandler";
-import { jwtOrApiKeyAuth } from "./middleware/auth";
+import { apiKeyAuth } from "./middleware/auth";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
 dotenv.config();
@@ -52,62 +51,34 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-/**
- * 사용자 인증 라우터 등록
- * /api/auth 경로로 들어오는 모든 요청을 authRouter로 위임
- * 예: /api/auth/login, /api/auth/logout, /api/auth/refresh
- * 
- * 인증 라우터는 JWT 인증이 필요하지 않음 (로그인을 위한 라우터)
- */
-app.use("/api/auth", authRouter);
 
 /**
- * ToreToken 관련 라우터 등록 (JWT 또는 API 키 인증 적용)
- * /api/tore 경로로 들어오는 모든 요청에 인증 미들웨어 적용
+ * ToreToken 관련 라우터 등록 (API 키 인증 적용)
+ * /api/tore 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /api/tore/info, /api/tore/balance/:address, /api/tore/transfer
- * 
- * 인증 방식:
- * - JWT 토큰이 있으면 JWT 인증
- * - JWT 토큰이 없으면 API 키 인증
- * - 두 방식 중 하나라도 성공하면 통과
  */
-app.use("/api/tore", jwtOrApiKeyAuth, toreTokenRouter);
+app.use("/api/tore", apiKeyAuth, toreTokenRouter);
 
 /**
- * ToreExchange 관련 라우터 등록 (JWT 또는 API 키 인증 적용)
- * /api/exchange 경로로 들어오는 모든 요청에 인증 미들웨어 적용
+ * ToreExchange 관련 라우터 등록 (API 키 인증 적용)
+ * /api/exchange 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /api/exchange/create-trade, /api/exchange/buy-nft, /api/exchange/stats
- * 
- * 인증 방식:
- * - JWT 토큰이 있으면 JWT 인증
- * - JWT 토큰이 없으면 API 키 인증
- * - 두 방식 중 하나라도 성공하면 통과
  */
-app.use("/api/exchange", jwtOrApiKeyAuth, exchangeRouter);
+app.use("/api/exchange", apiKeyAuth, exchangeRouter);
 
 /**
- * NFT 관련 라우터 등록 (JWT 또는 API 키 인증 적용)
- * /api/nft 경로로 들어오는 모든 요청에 인증 미들웨어 적용
+ * NFT 관련 라우터 등록 (API 키 인증 적용)
+ * /api/nft 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
- * 
- * 인증 방식:
- * - JWT 토큰이 있으면 JWT 인증
- * - JWT 토큰이 없으면 API 키 인증
- * - 두 방식 중 하나라도 성공하면 통과
  */
-app.use("/api/nft", jwtOrApiKeyAuth, nftRouter);
+app.use("/api/nft", apiKeyAuth, nftRouter);
 
 /**
- * v1 API 라우터 등록 (JWT 또는 API 키 인증 적용)
- * /v1 경로로 들어오는 모든 요청에 인증 미들웨어 적용
+ * v1 API 라우터 등록 (API 키 인증 적용)
+ * /v1 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /v1/nfts/mint, /v1/nfts/transfer
- * 
- * 인증 방식:
- * - JWT 토큰이 있으면 JWT 인증
- * - JWT 토큰이 없으면 API 키 인증
- * - 두 방식 중 하나라도 성공하면 통과
  */
-app.use("/v1", jwtOrApiKeyAuth, v1Router);
+app.use("/v1", apiKeyAuth, v1Router);
 
 // 전역 에러 핸들러 (항상 라우터 다음에 위치)
 app.use(errorHandler);

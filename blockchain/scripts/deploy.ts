@@ -18,11 +18,11 @@
  * 
  * 수정사항 250902:
  * - ESM 모드와 CommonJS 충돌 해결
- * - import { ethers } from "hardhat" → import hre from "hardhat"로 변경
+ * - import { ethers } from "hardhat" 직접 import 사용
  */
 
 import hre from "hardhat";
-const { ethers } = hre;
+const { ethers } = hre as any;
 
 /**
  * 메인 배포 함수

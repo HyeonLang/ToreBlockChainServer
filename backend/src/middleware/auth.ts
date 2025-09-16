@@ -80,40 +80,6 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction): voi
   }
 }
 
-/**
- * JWT 또는 API 키 인증 미들웨어
- * 
- * JWT 토큰이 있으면 JWT 인증, 없으면 API 키 인증
- * 두 인증 방식 중 하나라도 성공하면 통과
- * 
- * @param req - Express Request 객체
- * @param res - Express Response 객체
- * @param next - 다음 미들웨어 함수
- */
-export function jwtOrApiKeyAuth(req: Request, res: Response, next: NextFunction): void {
-  try {
-    // JWT 토큰 확인
-    const authHeader = req.headers.authorization;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      // JWT 토큰이 있으면 JWT 인증 시도
-      console.log('[Auth] JWT token found, attempting JWT authentication');
-      const { authenticateJWT } = require('./jwtAuth');
-      return authenticateJWT(req, res, next);
-    } else {
-      // JWT 토큰이 없으면 API 키 인증 시도
-      console.log('[Auth] No JWT token found, attempting API key authentication');
-      return apiKeyAuth(req, res, next);
-    }
-    
-  } catch (error) {
-    console.error('[Auth] JWT or API key authentication error:', error);
-    return res.status(500).json({ 
-      error: "Internal server error during authentication.",
-      code: "AUTH_ERROR"
-    });
-  }
-}
 
 
 

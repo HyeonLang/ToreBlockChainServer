@@ -17,7 +17,7 @@
  */
 
 import hre from "hardhat";
-const { ethers } = hre;
+const { ethers } = hre as any;
 
 /**
  * 메인 배포 함수

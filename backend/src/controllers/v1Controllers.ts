@@ -4,7 +4,7 @@
  * 기능:
  * - RESTful API v1 버전의 NFT 관리 기능
  * - 표준 HTTP 메서드와 RESTful 경로 사용
- * - JWT 또는 API 키 인증 필요
+ * - API 키 인증 필요
  * - 입력값 검증 및 에러 처리
  * 
  * API 특징:
