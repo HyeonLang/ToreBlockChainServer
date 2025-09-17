@@ -15,6 +15,7 @@ import nftRouter from "./routes/nft";
 import v1Router from "./routes/v1";
 import toreTokenRouter from "./routes/toreToken";
 import exchangeRouter from "./routes/exchange";
+import marketRouter from "./routes/market";
 import { errorHandler } from "./middleware/errorHandler";
 import { apiKeyAuth } from "./middleware/auth";
 
@@ -65,6 +66,13 @@ app.use("/api/tore", apiKeyAuth, toreTokenRouter);
  * 예: /api/exchange/create-trade, /api/exchange/buy-nft, /api/exchange/stats
  */
 app.use("/api/exchange", apiKeyAuth, exchangeRouter);
+
+/**
+ * 마켓 관련 라우터 등록 (API 키 인증 적용)
+ * /api/market 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
+ * 예: /api/market/list-nft, /api/market/buy-nft, /api/market/listings
+ */
+app.use("/api/market", apiKeyAuth, marketRouter);
 
 /**
  * NFT 관련 라우터 등록 (API 키 인증 적용)
