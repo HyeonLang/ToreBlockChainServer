@@ -15,7 +15,6 @@ import nftRouter from "./routes/nft";
 import v1Router from "./routes/v1";
 import toreTokenRouter from "./routes/toreToken";
 import exchangeRouter from "./routes/exchange";
-import marketRouter from "./routes/market";
 import { errorHandler } from "./middleware/errorHandler";
 import { apiKeyAuth } from "./middleware/auth";
 
@@ -29,16 +28,6 @@ const app = express();
 // 클라이언트에서 보내는 JSON 데이터를 req.body로 접근 가능하게 함
 app.use(express.json());
 
-// 정적 파일 서빙 (HTML, CSS, JS 파일들)
-// frontend/public 폴더의 파일들을 루트 경로에서 접근 가능하게 함
-app.use(express.static("frontend/public"));
-
-/**
- * 루트 경로 - 메인 페이지로 리다이렉트
- */
-app.get("/", (_req, res) => {
-  res.sendFile("index.html", { root: "frontend/public" });
-});
 
 /**
  * 헬스 체크 엔드포인트
@@ -67,12 +56,6 @@ app.use("/api/tore", apiKeyAuth, toreTokenRouter);
  */
 app.use("/api/exchange", apiKeyAuth, exchangeRouter);
 
-/**
- * 마켓 관련 라우터 등록 (API 키 인증 적용)
- * /api/market 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
- * 예: /api/market/list-nft, /api/market/buy-nft, /api/market/listings
- */
-app.use("/api/market", apiKeyAuth, marketRouter);
 
 /**
  * NFT 관련 라우터 등록 (API 키 인증 적용)
