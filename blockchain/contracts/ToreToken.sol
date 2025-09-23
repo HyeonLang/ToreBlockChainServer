@@ -50,7 +50,7 @@ contract ToreToken is ERC20, Ownable {
      * 
      * @param initialOwner - 초기 소유자 주소
      */
-    constructor(address initialOwner) ERC20("Tore Token", "TORE") Ownable(initialOwner) {
+    constructor(address initialOwner) ERC20("ToreTest", "TORE") Ownable(initialOwner) {
         // 초기 소유자에게 모든 토큰 민팅
         _mint(initialOwner, INITIAL_SUPPLY);
     }
