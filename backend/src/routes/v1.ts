@@ -4,7 +4,7 @@
  * 기능:
  * - RESTful API v1 버전의 NFT 관리 엔드포인트
  * - 표준 HTTP 메서드와 RESTful 경로 사용
- * - JWT 또는 API 키 인증 적용
+ * - API 키 인증 적용
  * - 레이트 리미팅 적용
  * 
  * API 설계 원칙:

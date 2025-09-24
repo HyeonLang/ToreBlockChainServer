@@ -8,7 +8,7 @@
  * 
  * 사용법:
  * - API 키 인증이 필요한 라우트에 적용
- * - JWT 인증과 함께 사용 가능
+ * - 단독으로 사용하여 API 보안 제공
  * 
  * @param req - Express Request 객체
  * @param res - Express Response 객체

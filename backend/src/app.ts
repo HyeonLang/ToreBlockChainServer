@@ -11,6 +11,8 @@
 
 import express from "express";
 import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
 import nftRouter from "./routes/nft";
 import v1Router from "./routes/v1";
 import toreTokenRouter from "./routes/toreToken";
@@ -19,7 +21,30 @@ import { errorHandler } from "./middleware/errorHandler";
 import { apiKeyAuth } from "./middleware/auth";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
-dotenv.config();
+// 현재 작업 디렉토리가 backend/src이므로 프로젝트 루트로 상대 경로 설정
+const envPath = path.resolve(process.cwd(), '../../.env');
+console.log('[App] .env 파일 경로 시도:', envPath);
+
+// 파일 존재 여부 확인
+try {
+  const exists = fs.existsSync(envPath);
+  console.log('[App] .env 파일 존재 여부:', exists);
+  if (exists) {
+    const content = fs.readFileSync(envPath, 'utf8');
+    console.log('[App] .env 파일 내용 미리보기:', content.substring(0, 100));
+  }
+} catch (err) {
+  console.error('[App] .env 파일 확인 오류:', err);
+}
+
+dotenv.config({ path: envPath });
+dotenv.config(); // 기본 경로도 시도
+
+console.log('[App] 환경변수 로딩 확인:', {
+  CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS ? '설정됨' : '설정안됨',
+  PRIVATE_KEY: process.env.PRIVATE_KEY ? '설정됨' : '설정안됨',
+  현재_디렉토리: process.cwd()
+});
 
 // Express 애플리케이션 인스턴스 생성
 const app = express();
@@ -62,7 +87,7 @@ app.use("/api/exchange", apiKeyAuth, exchangeRouter);
  * /api/nft 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
-app.use("/api/nft", apiKeyAuth, nftRouter);
+app.use("/api/blockchain/nft", apiKeyAuth, nftRouter);
 
 /**
  * v1 API 라우터 등록 (API 키 인증 적용)

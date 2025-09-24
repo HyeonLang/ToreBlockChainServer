@@ -40,7 +40,7 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트, ERC20(Tor
 - **Express.js** - 웹 서버
 - **Hardhat** - 스마트 컨트랙트 개발
 - **Ethers.js** - 블록체인 상호작용
-- **JWT** - JSON Web Token 인증
+- **API Key** - API 키 기반 인증
 - **bcryptjs** - 비밀번호 해싱
 
 ### 프론트엔드

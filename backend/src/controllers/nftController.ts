@@ -60,30 +60,131 @@ export async function contractAddressController(_req: Request, res: Response) {
 export async function mintNftController(req: Request, res: Response) {
   try {
     console.log('[mint] request body:', req.body);
-    // 요청 본문에서 파라미터 추출
-    const { to, tokenURI } = req.body as { to: string; tokenURI: string };
+    
+    // Java ContractNftRequest 구조에 맞게 파라미터 추출
+    const { 
+      walletAddress, 
+      contractAddress, 
+      itemId, 
+      userEquipItemId, 
+      itemData,
+      // 기존 방식도 지원 (하위 호환성)
+      to,
+      tokenURI 
+    } = req.body as { 
+      walletAddress?: string;
+      contractAddress?: string;
+      itemId?: number;
+      userEquipItemId?: number;
+      itemData?: any;
+      to?: string;
+      tokenURI?: string;
+    };
+    
+    // 주소 결정 (Java 방식 우선, 기존 방식 fallback)
+    const targetAddress = walletAddress || to;
+    
+    // tokenURI 결정 (itemData를 JSON 문자열로 변환하거나 기존 tokenURI 사용)
+    let finalTokenURI = tokenURI;
+    if (itemData && !tokenURI) {
+      // itemData가 있으면 JSON 문자열로 변환하여 tokenURI로 사용
+      finalTokenURI = typeof itemData === 'string' ? itemData : JSON.stringify(itemData);
+    }
     
     // 필수 파라미터 및 형식 검증
-    if (!to || typeof to !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
-      return res.status(400).json({ error: "Invalid 'to' address" });
+    console.log('[mint] 주소 검증 디버깅:', {
+      walletAddress: walletAddress,
+      to: to,
+      targetAddress: targetAddress,
+      typeof_targetAddress: typeof targetAddress,
+      targetAddress_length: targetAddress?.length,
+      regex_test: targetAddress ? /^0x[a-fA-F0-9]{40}$/.test(targetAddress) : false,
+      itemId: itemId,
+      userEquipItemId: userEquipItemId,
+      itemData: itemData,
+      finalTokenURI: finalTokenURI
+    });
+    
+    // 지갑 주소 검증
+    if (!targetAddress || typeof targetAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(targetAddress)) {
+      console.log('[mint] 주소 검증 실패:', { targetAddress, type: typeof targetAddress });
+      return res.status(400).json({ 
+        error: "Invalid wallet address",
+        details: {
+          received: targetAddress,
+          type: typeof targetAddress,
+          length: targetAddress?.length,
+          expected: "0x + 40 hex characters (total 42 chars)"
+        }
+      });
     }
-    if (!tokenURI || typeof tokenURI !== "string" || tokenURI.length > 2048) {
-      return res.status(400).json({ error: "Invalid 'tokenURI'" });
+    
+    // tokenURI 검증
+    if (!finalTokenURI || typeof finalTokenURI !== "string" || finalTokenURI.length > 2048) {
+      return res.status(400).json({ 
+        error: "Invalid tokenURI or itemData",
+        details: {
+          received: finalTokenURI,
+          type: typeof finalTokenURI,
+          length: finalTokenURI?.length,
+          expected: "Valid URI string or JSON data (max 2048 chars)"
+        }
+      });
     }
-    try {
-      const u = new URL(tokenURI);
-      if (!["http:", "https:", "ipfs:"].includes(u.protocol)) {
-        return res.status(400).json({ error: "Unsupported tokenURI scheme" });
+    
+    // Java 요청 전용 필드 검증 (선택사항)
+    if (walletAddress && itemId !== undefined) {
+      if (typeof itemId !== "number" || itemId <= 0) {
+        return res.status(400).json({ 
+          error: "Invalid itemId",
+          details: {
+            received: itemId,
+            type: typeof itemId,
+            expected: "Positive integer"
+          }
+        });
       }
-    } catch {
-      return res.status(400).json({ error: "Malformed tokenURI" });
+    }
+    
+    if (walletAddress && userEquipItemId !== undefined) {
+      if (typeof userEquipItemId !== "number" || userEquipItemId <= 0) {
+        return res.status(400).json({ 
+          error: "Invalid userEquipItemId",
+          details: {
+            received: userEquipItemId,
+            type: typeof userEquipItemId,
+            expected: "Positive integer"
+          }
+        });
+      }
+    }
+    // URL 형식 검증 (itemData가 JSON인 경우는 스킵)
+    if (!itemData) {
+      try {
+        const u = new URL(finalTokenURI);
+        if (!["http:", "https:", "ipfs:"].includes(u.protocol)) {
+          return res.status(400).json({ error: "Unsupported tokenURI scheme" });
+        }
+      } catch {
+        return res.status(400).json({ error: "Malformed tokenURI" });
+      }
     }
 
     // 블록체인 컨트랙트 인스턴스 생성
     const contract = await getContract();
     
+    // 컨트랙트 주소 검증 (Java 요청에서 제공된 경우)
+    if (contractAddress && contract.target?.toString().toLowerCase() !== contractAddress.toLowerCase()) {
+      console.log('[mint] Contract address mismatch:', {
+        provided: contractAddress,
+        actual: contract.target?.toString()
+      });
+      return res.status(400).json({ error: "Mismatched contractAddress" });
+    }
+
     // NFT 민팅 트랜잭션 실행
-    const tx = await contract.mint(to, tokenURI);
+    console.log('[mint] Minting NFT to:', targetAddress, 'with URI:', finalTokenURI);
+    const tx = await contract.mint(targetAddress, finalTokenURI);
     console.log('[mint] tx sent:', tx.hash);
     
     // 트랜잭션 완료 대기 및 영수증 획득
@@ -107,11 +208,18 @@ export async function mintNftController(req: Request, res: Response) {
       }
     }
     
-    // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환
+    // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환 (Java 요청 정보 포함)
     const payload = { 
       txHash: receipt?.hash ?? tx.hash,
       tokenId: tokenId,
-      contractAddress: process.env.CONTRACT_ADDRESS || null
+      contractAddress: process.env.CONTRACT_ADDRESS || null,
+      // Java 요청 정보 추가 (디버깅 및 추적용)
+      ...(walletAddress && {
+        mintedTo: targetAddress,
+        itemId: itemId,
+        userEquipItemId: userEquipItemId,
+        itemDataIncluded: !!itemData
+      })
     };
     console.log('[mint] response:', payload);
     return res.json(payload);
@@ -144,11 +252,40 @@ export async function transferNftController(req: Request, res: Response) {
     const { from, to, tokenId } = req.body as { from: string; to: string; tokenId: string | number };
     
     // 필수 파라미터 및 형식 검증
+    console.log('[transfer] 주소 검증 디버깅:', {
+      from: from,
+      to: to,
+      typeof_from: typeof from,
+      typeof_to: typeof to,
+      from_length: from?.length,
+      to_length: to?.length,
+      from_regex_test: from ? /^0x[a-fA-F0-9]{40}$/.test(from) : false,
+      to_regex_test: to ? /^0x[a-fA-F0-9]{40}$/.test(to) : false
+    });
+    
     if (!from || typeof from !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(from)) {
-      return res.status(400).json({ error: "Invalid 'from' address" });
+      console.log('[transfer] from 주소 검증 실패:', { from, type: typeof from });
+      return res.status(400).json({ 
+        error: "Invalid 'from' address",
+        details: {
+          received: from,
+          type: typeof from,
+          length: from?.length,
+          expected: "0x + 40 hex characters (total 42 chars)"
+        }
+      });
     }
     if (!to || typeof to !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
-      return res.status(400).json({ error: "Invalid 'to' address" });
+      console.log('[transfer] to 주소 검증 실패:', { to, type: typeof to });
+      return res.status(400).json({ 
+        error: "Invalid 'to' address",
+        details: {
+          received: to,
+          type: typeof to,
+          length: to?.length,
+          expected: "0x + 40 hex characters (total 42 chars)"
+        }
+      });
     }
     if (tokenId === undefined || tokenId === null) {
       return res.status(400).json({ error: "Missing tokenId" });

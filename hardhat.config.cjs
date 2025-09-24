@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('@nomicfoundation/hardhat-toolbox');
+require('ts-node/register');
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const FUJI_RPC_URL = process.env.FUJI_RPC_URL || "https://api.avax-test.network/ext/bc/C/rpc";
@@ -23,6 +24,10 @@ const config = {
     tests: "backend/tests",
     cache: "blockchain/cache",
     artifacts: "blockchain/artifacts"
+  },
+  typechain: {
+    outDir: "typechain",
+    target: "ethers-v6"
   }
 };
 

@@ -12,11 +12,9 @@
  */
 
 import { ethers } from "ethers";
-import dotenv from "dotenv";
 import abiJson from "../../../blockchain/artifacts/blockchain/contracts/GameItem.sol/GameItem.json";
 
-// 환경 변수 로드
-dotenv.config();
+// 환경 변수는 app.ts에서 이미 로드됨 (dotenv.config() 호출)
 
 /**
  * 이더리움 네트워크 Provider 생성
@@ -61,8 +59,19 @@ export async function getWallet(): Promise<ethers.Wallet> {
  * @throws Error - CONTRACT_ADDRESS 환경변수가 없을 때
  */
 export async function getContract() {
+  console.log('[getContract] 환경변수 디버깅:', {
+    CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS,
+    NODE_ENV: process.env.NODE_ENV,
+    PWD: process.cwd(),
+    ENV_KEYS: Object.keys(process.env).filter(key => key.includes('CONTRACT'))
+  });
+  
   const address = process.env.CONTRACT_ADDRESS;
-  if (!address) throw new Error("CONTRACT_ADDRESS is required");
+  if (!address) {
+    console.error('[getContract] CONTRACT_ADDRESS가 설정되지 않았습니다.');
+    console.error('[getContract] 현재 작업 디렉토리:', process.cwd());
+    throw new Error("CONTRACT_ADDRESS is required");
+  }
   
   // 지갑 인스턴스 생성 (개인키로 서명 가능)
   const wallet = await getWallet();

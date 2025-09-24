@@ -16,7 +16,7 @@ typechain/
 typechain-types/
 
 # Environment variables
-.env
+backend/src/.env
 .env.local
 .env.development.local
 .env.test.local
