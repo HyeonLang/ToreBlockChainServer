@@ -42,6 +42,202 @@ export async function contractAddressController(_req: Request, res: Response) {
 }
 
 /**
+ * 토큰 ID 분석 컨트롤러
+ * 
+ * 토큰 ID에서 itemId와 인스턴스 번호를 추출합니다.
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { tokenId: number, itemId: number, instanceNumber: number } - 분석 결과
+ */
+export async function analyzeTokenIdController(req: Request, res: Response) {
+  try {
+    const { tokenId } = req.params;
+    
+    if (!tokenId) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    
+    const numericTokenId = Number(tokenId);
+    if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    const contract = await getContract();
+    
+    // 컨트랙트에서 itemId와 인스턴스 번호 추출
+    const [itemId, instanceNumber] = await Promise.all([
+      contract.getItemId(BigInt(tokenId)),
+      contract.getInstanceNumber(BigInt(tokenId))
+    ]);
+    
+    return res.json({
+      tokenId: numericTokenId,
+      itemId: Number(itemId),
+      instanceNumber: Number(instanceNumber),
+      isLegacyToken: Number(itemId) === 0  // itemId가 0이면 기존 방식
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Token analysis failed" });
+  }
+}
+
+/**
+ * 아이템 발행량 조회 컨트롤러
+ * 
+ * 특정 itemId의 총 발행량을 조회합니다.
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { itemId: number, supply: number, nextInstance: number } - 발행량 정보
+ */
+export async function getItemSupplyController(req: Request, res: Response) {
+  try {
+    const { itemId } = req.params;
+    
+    if (!itemId) {
+      return res.status(400).json({ error: "Missing itemId" });
+    }
+    
+    const numericItemId = Number(itemId);
+    if (!Number.isInteger(numericItemId) || numericItemId <= 0) {
+      return res.status(400).json({ error: "Invalid itemId" });
+    }
+
+    const contract = await getContract();
+    
+    // 컨트랙트에서 발행량과 다음 인스턴스 번호 조회
+    const [supply, nextInstance] = await Promise.all([
+      contract.getItemSupply(BigInt(itemId)),
+      contract.getNextInstanceNumber(BigInt(itemId))
+    ]);
+    
+    return res.json({
+      itemId: numericItemId,
+      supply: Number(supply),
+      nextInstance: Number(nextInstance)
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Item supply query failed" });
+  }
+}
+
+/**
+ * 전체 NFT 통계 조회 컨트롤러
+ * 
+ * 전체 NFT의 발행량, 민팅량, 소각량을 조회합니다.
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { totalSupply: number, totalMinted: number, totalBurned: number } - 전체 통계
+ */
+export async function getTotalStatsController(req: Request, res: Response) {
+  try {
+    const contract = await getContract();
+    
+    // 컨트랙트에서 전체 통계 조회
+    const [totalSupply, totalMinted, totalBurned] = await Promise.all([
+      contract.totalSupply(),      // 현재 존재하는 NFT 수
+      contract.totalMinted(),      // 총 민팅된 NFT 수
+      contract.totalBurned()       // 총 소각된 NFT 수
+    ]);
+    
+    return res.json({
+      totalSupply: Number(totalSupply),
+      totalMinted: Number(totalMinted),
+      totalBurned: Number(totalBurned),
+      burnRate: Number(totalMinted) > 0 ? (Number(totalBurned) / Number(totalMinted) * 100).toFixed(2) + '%' : '0%'
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Total stats query failed" });
+  }
+}
+
+/**
+ * 여러 아이템 발행량 배치 조회 컨트롤러
+ * 
+ * 여러 itemId들의 발행량을 한 번에 조회합니다.
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { itemSupplies: Array<{itemId: number, supply: number}> } - 아이템별 발행량
+ */
+export async function getItemSuppliesBatchController(req: Request, res: Response) {
+  try {
+    const { itemIds } = req.body as { itemIds: number[] };
+    
+    if (!itemIds || !Array.isArray(itemIds)) {
+      return res.status(400).json({ error: "Missing or invalid itemIds array" });
+    }
+    
+    if (itemIds.length === 0) {
+      return res.json({ itemSupplies: [] });
+    }
+    
+    if (itemIds.length > 100) {
+      return res.status(400).json({ error: "Too many itemIds (max 100)" });
+    }
+    
+    // itemId 유효성 검증
+    for (const itemId of itemIds) {
+      if (!Number.isInteger(itemId) || itemId <= 0) {
+        return res.status(400).json({ error: `Invalid itemId: ${itemId}` });
+      }
+    }
+
+    const contract = await getContract();
+    
+    // 컨트랙트에서 배치 조회
+    const supplies = await contract.getItemSupplies(itemIds.map(id => BigInt(id)));
+    
+    const itemSupplies = itemIds.map((itemId, index) => ({
+      itemId,
+      supply: Number(supplies[index])
+    }));
+    
+    return res.json({ itemSupplies });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Batch supply query failed" });
+  }
+}
+
+/**
+ * NFT 존재 여부 확인 컨트롤러
+ * 
+ * 특정 토큰 ID의 NFT가 존재하는지 확인합니다.
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { tokenId: number, exists: boolean } - 존재 여부
+ */
+export async function checkNftExistsController(req: Request, res: Response) {
+  try {
+    const { tokenId } = req.params;
+    
+    if (!tokenId) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    
+    const numericTokenId = Number(tokenId);
+    if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    const contract = await getContract();
+    
+    // NFT 존재 여부 확인
+    const exists = await contract.exists(BigInt(tokenId));
+    
+    return res.json({
+      tokenId: numericTokenId,
+      exists: exists
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "NFT existence check failed" });
+  }
+}
+
+/**
  * NFT 민팅 컨트롤러
  * 
  * 실행 흐름:
@@ -184,7 +380,18 @@ export async function mintNftController(req: Request, res: Response) {
 
     // NFT 민팅 트랜잭션 실행
     console.log('[mint] Minting NFT to:', targetAddress, 'with URI:', finalTokenURI);
-    const tx = await contract.mint(targetAddress, finalTokenURI);
+    
+    let tx;
+    if (itemId && typeof itemId === "number") {
+      // itemId가 있으면 새로운 mintWithItemId 함수 사용
+      console.log('[mint] Using mintWithItemId with itemId:', itemId);
+      tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
+    } else {
+      // itemId가 없으면 기존 mint 함수 사용 (하위 호환성)
+      console.log('[mint] Using legacy mint function');
+      tx = await contract.mint(targetAddress, finalTokenURI);
+    }
+    
     console.log('[mint] tx sent:', tx.hash);
     
     // 트랜잭션 완료 대기 및 영수증 획득
