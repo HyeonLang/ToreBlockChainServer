@@ -27,8 +27,6 @@
  */
 
 import { Router } from "express";
-import { apiKeyAuth } from "../middleware/auth";
-import { rateLimit } from "../middleware/rateLimit";
 import { 
   v1MintController,           // NFT 생성 컨트롤러
   v1TransferController,       // NFT 전송 컨트롤러
@@ -41,18 +39,9 @@ import {
 const v1 = Router();
 
 /**
- * 전역 미들웨어 적용
- * 
- * 모든 v1 API 엔드포인트에 공통으로 적용되는 미들웨어:
- * 1. apiKeyAuth: API 키 인증
- * 2. rateLimit: 레이트 리미팅 (토큰 버킷 알고리즘)
- * 
- * 실행 순서:
- * 1. API 키 인증 확인
- * 2. 레이트 리미팅 확인
- * 3. 각 엔드포인트 컨트롤러 실행
+ * v1 API 엔드포인트 (인증 없음)
+ * 모든 요청에 인증 없이 접근 가능
  */
-v1.use(apiKeyAuth, rateLimit);
 
 /**
  * POST /v1/nfts

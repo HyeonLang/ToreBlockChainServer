@@ -30,16 +30,12 @@ contract ToreToken is ERC20, Ownable {
     mapping(address => bool) public gameContracts;  // 게임 컨트랙트 주소들
     mapping(address => bool) public gameManagers;   // 게임 매니저 주소들
     
-    // 거래소 관련 주소들
-    mapping(address => bool) public exchangeContracts;  // 거래소 컨트랙트 주소들
     
     // 이벤트
     event GameContractAdded(address indexed contractAddress);
     event GameContractRemoved(address indexed contractAddress);
     event GameManagerAdded(address indexed manager);
     event GameManagerRemoved(address indexed manager);
-    event ExchangeContractAdded(address indexed contractAddress);
-    event ExchangeContractRemoved(address indexed contractAddress);
     event GameRewardDistributed(address indexed player, uint256 amount);
     event BatchTransferCompleted(uint256 totalAmount, uint256 recipientCount);
     event TokensMinted(address indexed to, uint256 amount);
@@ -106,26 +102,6 @@ contract ToreToken is ERC20, Ownable {
         emit GameManagerRemoved(manager);
     }
 
-    /**
-     * 거래소 컨트랙트 추가 (소유자만 실행 가능)
-     * 
-     * @param contractAddress - 추가할 거래소 컨트랙트 주소
-     */
-    function addExchangeContract(address contractAddress) external onlyOwner {
-        require(contractAddress != address(0), "ToreToken: Invalid contract address");
-        exchangeContracts[contractAddress] = true;
-        emit ExchangeContractAdded(contractAddress);
-    }
-
-    /**
-     * 거래소 컨트랙트 제거 (소유자만 실행 가능)
-     * 
-     * @param contractAddress - 제거할 거래소 컨트랙트 주소
-     */
-    function removeExchangeContract(address contractAddress) external onlyOwner {
-        exchangeContracts[contractAddress] = false;
-        emit ExchangeContractRemoved(contractAddress);
-    }
 
     /**
      * 게임 보상 지급 (게임 컨트랙트나 매니저만 실행 가능)
@@ -242,15 +218,6 @@ contract ToreToken is ERC20, Ownable {
         return gameManagers[manager];
     }
 
-    /**
-     * 거래소 컨트랙트인지 확인
-     * 
-     * @param contractAddress - 확인할 컨트랙트 주소
-     * @return 거래소 컨트랙트 여부
-     */
-    function isExchangeContract(address contractAddress) external view returns (bool) {
-        return exchangeContracts[contractAddress];
-    }
 
     /**
      * 총 공급량 조회
@@ -271,19 +238,4 @@ contract ToreToken is ERC20, Ownable {
         return super.balanceOf(account);
     }
 
-    /**
-     * NFT 거래를 위한 승인 전송 (거래소 컨트랙트만 실행 가능)
-     * 
-     * @param from - 보내는 주소
-     * @param to - 받는 주소
-     * @param amount - 전송할 토큰 양
-     */
-    function exchangeTransfer(address from, address to, uint256 amount) external {
-        require(exchangeContracts[msg.sender], "ToreToken: Only authorized exchange contracts");
-        require(from != address(0), "ToreToken: Invalid from address");
-        require(to != address(0), "ToreToken: Invalid to address");
-        require(amount > 0, "ToreToken: Amount must be greater than 0");
-        
-        _transfer(from, to, amount);
-    }
 }

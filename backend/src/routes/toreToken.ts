@@ -6,7 +6,6 @@
  * - 토큰 잔액 조회, 전송, 민팅, 소각
  * - 게임 보상 지급 및 배치 전송
  * - 게임 컨트랙트 및 매니저 관리
- * - 거래소 컨트랙트 관리
  * - 지갑별 전송 내역 조회
  * 
  * 라우트:
@@ -18,7 +17,6 @@
  * - POST /api/tore/batch-transfer - 배치 전송
  * - POST /api/tore/add-game-contract - 게임 컨트랙트 추가
  * - POST /api/tore/add-game-manager - 게임 매니저 추가
- * - POST /api/tore/add-exchange-contract - 거래소 컨트랙트 추가
  * - GET /api/tore/info - 토큰 정보 조회
  * - GET /api/tore/history/:address - 지갑 전송 내역 조회
  * - GET /api/tore/connection - 토큰 연결 상태 확인
@@ -34,7 +32,6 @@ import {
   batchTransferTokens,
   addGameContractToToken,
   addGameManagerToToken,
-  addExchangeContractToToken,
   getTokenInfo,
   getTransferHistory,
   checkConnection
@@ -97,12 +94,6 @@ router.post('/add-game-contract', addGameContractToToken);
  */
 router.post('/add-game-manager', addGameManagerToToken);
 
-/**
- * 거래소 컨트랙트 추가
- * POST /api/tore/add-exchange-contract
- * Body: { contractAddress: string }
- */
-router.post('/add-exchange-contract', addExchangeContractToToken);
 
 /**
  * 토큰 정보 조회

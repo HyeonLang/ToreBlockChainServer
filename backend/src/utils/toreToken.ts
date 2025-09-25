@@ -5,7 +5,6 @@
  * - ToreToken ERC-20 컨트랙트 연결 및 상호작용
  * - 토큰 잔액 조회, 전송, 게임 보상 지급
  * - 게임 컨트랙트 및 매니저 관리
- * - 거래소 컨트랙트 관리
  * - 배치 전송 및 토큰 정보 조회
  * - NFT 거래 지원
  * 
@@ -19,7 +18,6 @@
  * - 게임 보상 지급
  * - 배치 전송
  * - 게임 컨트랙트/매니저 관리
- * - 거래소 컨트랙트 관리
  * - NFT 거래 지원
  */
 
@@ -256,26 +254,6 @@ export async function addGameManager(managerAddress: string): Promise<string> {
   }
 }
 
-/**
- * 거래소 컨트랙트 추가
- * 
- * @param contractAddress - 추가할 거래소 컨트랙트 주소
- * @returns Promise<string> - 트랜잭션 해시
- */
-export async function addExchangeContract(contractAddress: string): Promise<string> {
-  try {
-    const contract = await getToreTokenContractWithWallet();
-    
-    const tx = await contract.addExchangeContract(contractAddress);
-    await tx.wait();
-    
-    console.log(`[ToreToken] Exchange contract added: ${contractAddress}`);
-    return tx.hash;
-  } catch (error) {
-    console.error('[ToreToken] Failed to add exchange contract:', error);
-    throw error;
-  }
-}
 
 /**
  * 토큰 민팅

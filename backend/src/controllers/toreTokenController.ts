@@ -6,7 +6,6 @@
  * - 토큰 잔액 조회, 전송, 민팅, 소각
  * - 게임 보상 지급 및 배치 전송
  * - 게임 컨트랙트 및 매니저 관리
- * - 거래소 컨트랙트 관리
  * - 지갑별 전송 내역 조회
  * 
  * 지원 엔드포인트:
@@ -18,7 +17,6 @@
  * - POST /api/tore/batch-transfer - 배치 전송
  * - POST /api/tore/add-game-contract - 게임 컨트랙트 추가
  * - POST /api/tore/add-game-manager - 게임 매니저 추가
- * - POST /api/tore/add-exchange-contract - 거래소 컨트랙트 추가
  * - GET /api/tore/info - 토큰 정보 조회
  * - GET /api/tore/history/:address - 지갑 전송 내역 조회
  */
@@ -31,7 +29,6 @@ import {
   batchTransfer,
   addGameContract,
   addGameManager,
-  addExchangeContract,
   mintTokens,
   burnTokens,
   getTokenInfo as getToreTokenInfo,
@@ -388,41 +385,6 @@ export async function addGameManagerToToken(req: Request, res: Response) {
   }
 }
 
-/**
- * 거래소 컨트랙트 추가
- * 
- * @param req - Express 요청 객체
- * @param res - Express 응답 객체
- */
-export async function addExchangeContractToToken(req: Request, res: Response) {
-  try {
-    const { contractAddress } = req.body;
-    
-    // 입력 검증
-    if (!contractAddress || !contractAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid contract address format'
-      });
-    }
-    
-    const txHash = await addExchangeContract(contractAddress);
-    
-    res.json({
-      success: true,
-      data: {
-        transactionHash: txHash,
-        contractAddress
-      }
-    });
-  } catch (error) {
-    console.error('[ToreToken Controller] Add exchange contract error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add exchange contract'
-    });
-  }
-}
 
 /**
  * 토큰 정보 조회

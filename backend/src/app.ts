@@ -16,9 +16,8 @@ import fs from "fs";
 import nftRouter from "./routes/nft";
 import v1Router from "./routes/v1";
 import toreTokenRouter from "./routes/toreToken";
-import exchangeRouter from "./routes/exchange";
+import multiTokenRouter from "./routes/multiToken";
 import { errorHandler } from "./middleware/errorHandler";
-import { apiKeyAuth } from "./middleware/auth";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
 // 현재 작업 디렉토리가 backend/src이므로 프로젝트 루트로 상대 경로 설정
@@ -68,33 +67,33 @@ app.get("/health", (_req, res) => {
 
 
 /**
- * ToreToken 관련 라우터 등록 (API 키 인증 적용)
- * /api/tore 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
+ * ToreToken 관련 라우터 등록 (인증 없음)
+ * /api/tore 경로로 들어오는 모든 요청에 인증 없이 접근 가능
  * 예: /api/tore/info, /api/tore/balance/:address, /api/tore/transfer
  */
-app.use("/api/tore", apiKeyAuth, toreTokenRouter);
+app.use("/api/tore", toreTokenRouter);
 
 /**
- * ToreExchange 관련 라우터 등록 (API 키 인증 적용)
- * /api/exchange 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
- * 예: /api/exchange/create-trade, /api/exchange/buy-nft, /api/exchange/stats
+ * MultiToken 관련 라우터 등록 (인증 없음)
+ * /api/multi-token 경로로 들어오는 모든 요청에 인증 없이 접근 가능
+ * 예: /api/multi-token/create, /api/multi-token/mint, /api/multi-token/balance/:symbol/:address
  */
-app.use("/api/exchange", apiKeyAuth, exchangeRouter);
+app.use("/api/multi-token", multiTokenRouter);
 
 
 /**
- * NFT 관련 라우터 등록 (개발 중 API 키 인증 임시 비활성화)
- * /api/nft 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
+ * NFT 관련 라우터 등록 (인증 없음)
+ * /api/nft 경로로 들어오는 모든 요청에 인증 없이 접근 가능
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
-app.use("/api/blockchain/nft", nftRouter); // apiKeyAuth 임시 제거
+app.use("/api/blockchain/nft", nftRouter);
 
 /**
- * v1 API 라우터 등록 (API 키 인증 적용)
- * /v1 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
+ * v1 API 라우터 등록 (인증 없음)
+ * /v1 경로로 들어오는 모든 요청에 인증 없이 접근 가능
  * 예: /v1/nfts/mint, /v1/nfts/transfer
  */
-app.use("/v1", apiKeyAuth, v1Router);
+app.use("/v1", v1Router);
 
 // 전역 에러 핸들러 (항상 라우터 다음에 위치)
 app.use(errorHandler);
