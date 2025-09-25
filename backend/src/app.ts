@@ -83,11 +83,11 @@ app.use("/api/exchange", apiKeyAuth, exchangeRouter);
 
 
 /**
- * NFT 관련 라우터 등록 (API 키 인증 적용)
+ * NFT 관련 라우터 등록 (개발 중 API 키 인증 임시 비활성화)
  * /api/nft 경로로 들어오는 모든 요청에 API 키 인증 미들웨어 적용
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
-app.use("/api/blockchain/nft", apiKeyAuth, nftRouter);
+app.use("/api/blockchain/nft", nftRouter); // apiKeyAuth 임시 제거
 
 /**
  * v1 API 라우터 등록 (API 키 인증 적용)

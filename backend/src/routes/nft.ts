@@ -43,11 +43,14 @@ router.get("/contract-address", contractAddressController);
  * POST /api/nft/mint
  * 새로운 NFT를 민팅하는 엔드포인트
  * 
- * 요청 본문: { to: string, tokenURI: string }
- * - to: NFT를 받을 주소
+ * 요청 본문: { to: string, tokenURI: string, itemId?: number }
+ * - to (또는 walletAddress): NFT를 받을 주소
  * - tokenURI: NFT 메타데이터 URI
+ * - itemId (선택): 게임 아이템 ID (제공 시 mintWithItemId 사용)
  * 
  * 응답: { txHash: string, tokenId: number }
+ * 
+ * 참고: 컨트랙트 주소는 백엔드에서 관리하므로 요청에 포함하지 마세요.
  */
 router.post("/mint", mintNftController);
 

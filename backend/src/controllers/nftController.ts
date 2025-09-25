@@ -260,7 +260,6 @@ export async function mintNftController(req: Request, res: Response) {
     // Java ContractNftRequest 구조에 맞게 파라미터 추출
     const { 
       walletAddress, 
-      contractAddress, 
       itemId, 
       userEquipItemId, 
       itemData,
@@ -269,7 +268,6 @@ export async function mintNftController(req: Request, res: Response) {
       tokenURI 
     } = req.body as { 
       walletAddress?: string;
-      contractAddress?: string;
       itemId?: number;
       userEquipItemId?: number;
       itemData?: any;
@@ -366,17 +364,8 @@ export async function mintNftController(req: Request, res: Response) {
       }
     }
 
-    // 블록체인 컨트랙트 인스턴스 생성
+    // 블록체인 컨트랙트 인스턴스 생성 (백엔드에서 관리하는 컨트랙트 주소 사용)
     const contract = await getContract();
-    
-    // 컨트랙트 주소 검증 (Java 요청에서 제공된 경우)
-    if (contractAddress && contract.target?.toString().toLowerCase() !== contractAddress.toLowerCase()) {
-      console.log('[mint] Contract address mismatch:', {
-        provided: contractAddress,
-        actual: contract.target?.toString()
-      });
-      return res.status(400).json({ error: "Mismatched contractAddress" });
-    }
 
     // NFT 민팅 트랜잭션 실행
     console.log('[mint] Minting NFT to:', targetAddress, 'with URI:', finalTokenURI);

@@ -90,9 +90,8 @@ export async function v1MintController(req: Request, res: Response): Promise<voi
     console.log('[v1 Mint] Request body:', req.body);
     
     // 요청 본문에서 파라미터 추출
-    const { walletAddress, contractAddress, itemInfo } = req.body as {
+    const { walletAddress, itemInfo } = req.body as {
       walletAddress?: string;                    // NFT를 받을 지갑 주소
-      contractAddress?: string;                  // 컨트랙트 주소 (선택사항, 검증용)
       itemInfo?: { 
         tokenURI?: string;                       // NFT 메타데이터 URI
       } & Record<string, unknown>;               // 기타 메타데이터 (확장 가능)
@@ -111,18 +110,8 @@ export async function v1MintController(req: Request, res: Response): Promise<voi
       return res.status(400).json({ error: "Invalid itemInfo.tokenURI" });
     }
 
-    // 블록체인 컨트랙트 인스턴스 생성
+    // 블록체인 컨트랙트 인스턴스 생성 (백엔드에서 관리하는 컨트랙트 주소 사용)
     const contract = await getContract();
-    
-    // 컨트랙트 주소 검증 (선택사항)
-    // 요청에서 제공된 contractAddress와 실제 컨트랙트 주소가 일치하는지 확인
-    if (contractAddress && contract.target?.toString().toLowerCase() !== contractAddress.toLowerCase()) {
-      console.log('[v1 Mint] Contract address mismatch:', {
-        provided: contractAddress,
-        actual: contract.target?.toString()
-      });
-      return res.status(400).json({ error: "Mismatched contractAddress" });
-    }
 
     // 블록체인에서 NFT 민팅 실행
     console.log('[v1 Mint] Minting NFT to:', walletAddress, 'with URI:', tokenURI);
@@ -213,10 +202,9 @@ export async function v1TransferController(req: Request, res: Response): Promise
     const { nftId } = req.params as { nftId: string };
     
     // 요청 본문에서 주소 정보 추출
-    const { fromWalletAddress, toWalletAddress, contractAddress } = req.body as {
+    const { fromWalletAddress, toWalletAddress } = req.body as {
       fromWalletAddress?: string;    // NFT를 보내는 지갑 주소
       toWalletAddress?: string;      // NFT를 받을 지갑 주소
-      contractAddress?: string;      // 컨트랙트 주소 (선택사항, 검증용)
     };
 
     // 필수 파라미터 검증: nftId
@@ -237,17 +225,8 @@ export async function v1TransferController(req: Request, res: Response): Promise
       return res.status(400).json({ error: "Invalid toWalletAddress" });
     }
 
-    // 블록체인 컨트랙트 인스턴스 생성
+    // 블록체인 컨트랙트 인스턴스 생성 (백엔드에서 관리하는 컨트랙트 주소 사용)
     const contract = await getContract();
-    
-    // 컨트랙트 주소 검증 (선택사항)
-    if (contractAddress && contract.target?.toString().toLowerCase() !== contractAddress.toLowerCase()) {
-      console.log('[v1 Transfer] Contract address mismatch:', {
-        provided: contractAddress,
-        actual: contract.target?.toString()
-      });
-      return res.status(400).json({ error: "Mismatched contractAddress" });
-    }
 
     // 블록체인에서 NFT 전송 실행
     console.log('[v1 Transfer] Transferring NFT:', nftId, 'from:', fromWalletAddress, 'to:', toWalletAddress);
