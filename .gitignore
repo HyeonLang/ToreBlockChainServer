@@ -16,11 +16,14 @@ typechain/
 typechain-types/
 
 # Environment variables
-backend/src/.env
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Security sensitive files (contain private keys and contract addresses)
+ENV_SETUP_GUIDE.md
 
 # IDE files
 .vscode/
