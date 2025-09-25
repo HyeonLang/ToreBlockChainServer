@@ -3,8 +3,8 @@
  * 
  * 기능:
  * - 다중 토큰 팩토리를 통한 여러 종류의 토큰 관리
- * - 토큰 생성, 조회, 민팅, 전송
- * - 각 토큰별 독립적인 잔액 및 전송 관리
+ * - 토큰 생성, 조회, 민팅, 소각
+ * - 각 토큰별 독립적인 잔액 관리
  * - 토큰 목록 조회 및 정보 관리
  * 
  * 지원 엔드포인트:
@@ -13,7 +13,7 @@
  * - GET /api/multi-token/info/:symbol - 특정 토큰 정보 조회
  * - GET /api/multi-token/balance/:symbol/:address - 특정 토큰 잔액 조회
  * - POST /api/multi-token/mint - 특정 토큰 민팅
- * - POST /api/multi-token/transfer - 특정 토큰 전송
+ * - POST /api/multi-token/burn - 특정 토큰 소각
  * - GET /api/multi-token/active - 활성 토큰 목록 조회
  */
 
@@ -24,7 +24,7 @@ import {
   getTokenInfo,
   getTokenBalance,
   mintToken,
-  transferToken,
+  burnToken,
   getActiveTokens,
   checkFactoryConnection
 } from '../utils/multiToken';
@@ -258,27 +258,20 @@ export async function mintTokenBySymbol(req: Request, res: Response) {
 }
 
 /**
- * 특정 토큰 전송
+ * 특정 토큰 소각
  * 
  * @param req - Express 요청 객체
  * @param res - Express 응답 객체
  */
-export async function transferTokenBySymbol(req: Request, res: Response) {
+export async function burnTokenBySymbol(req: Request, res: Response) {
   try {
-    const { symbol, to, amount } = req.body;
+    const { symbol, amount } = req.body;
     
     // 입력 검증
-    if (!symbol || !to || !amount) {
+    if (!symbol || !amount) {
       return res.status(400).json({
         success: false,
-        error: 'Token symbol, recipient address, and amount are required'
-      });
-    }
-    
-    if (!to.match(/^0x[a-fA-F0-9]{40}$/)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid recipient address format'
+        error: 'Token symbol and amount are required'
       });
     }
     
@@ -289,22 +282,21 @@ export async function transferTokenBySymbol(req: Request, res: Response) {
       });
     }
     
-    const txHash = await transferToken(symbol, to, amount);
+    const txHash = await burnToken(symbol, amount);
     
     res.json({
       success: true,
       data: {
         transactionHash: txHash,
         symbol,
-        to,
         amount
       }
     });
   } catch (error) {
-    console.error('[MultiToken Controller] Transfer token error:', error);
+    console.error('[MultiToken Controller] Burn token error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to transfer token'
+      error: 'Failed to burn token'
     });
   }
 }

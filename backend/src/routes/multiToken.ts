@@ -2,6 +2,8 @@
  * MultiToken 라우트
  * 
  * 다중 토큰 팩토리를 통한 여러 종류의 토큰 관리 API 라우트
+ * - 토큰 생성, 발급(민트), 소각(burn) 기능만 제공
+ * - 전송 기능은 프론트엔드에서 처리
  */
 
 import express from 'express';
@@ -12,7 +14,7 @@ import {
   getTokenInfoBySymbol,
   getTokenBalanceBySymbol,
   mintTokenBySymbol,
-  transferTokenBySymbol,
+  burnTokenBySymbol,
   checkFactoryConnectionStatus
 } from '../controllers/multiTokenController';
 const router = express.Router();
@@ -56,17 +58,17 @@ router.get('/balance/:symbol/:address', getTokenBalanceBySymbol);
 
 /**
  * @route   POST /api/multi-token/mint
- * @desc    특정 토큰 민팅
+ * @desc    특정 토큰 민팅 (발급)
  * @access  Private
  */
 router.post('/mint', mintTokenBySymbol);
 
 /**
- * @route   POST /api/multi-token/transfer
- * @desc    특정 토큰 전송
+ * @route   POST /api/multi-token/burn
+ * @desc    특정 토큰 소각
  * @access  Private
  */
-router.post('/transfer', transferTokenBySymbol);
+router.post('/burn', burnTokenBySymbol);
 
 /**
  * @route   GET /api/multi-token/connection

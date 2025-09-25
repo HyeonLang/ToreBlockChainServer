@@ -1,16 +1,17 @@
 /**
- * ToreToken 라우터
+ * ToreToken 라우터 (레거시 - 단일 토큰 시스템)
  * 
  * 기능:
  * - ToreToken ERC-20 토큰 관련 API 라우트 정의
- * - 토큰 잔액 조회, 전송, 민팅, 소각
+ * - 토큰 잔액 조회, 민팅, 소각
  * - 게임 보상 지급 및 배치 전송
  * - 게임 컨트랙트 및 매니저 관리
  * - 지갑별 전송 내역 조회
  * 
+ * 주의: 새로운 토큰 생성은 MultiTokenFactory 사용 권장
+ * 
  * 라우트:
  * - GET /api/tore/balance/:address - 토큰 잔액 조회
- * - POST /api/tore/transfer - 토큰 전송
  * - POST /api/tore/mint - 토큰 민팅
  * - POST /api/tore/burn - 토큰 소각
  * - POST /api/tore/reward - 게임 보상 지급
@@ -25,7 +26,6 @@
 import express from 'express';
 import {
   getBalance,
-  transfer,
   mint,
   burn,
   distributeReward,
@@ -44,13 +44,6 @@ const router = express.Router();
  * GET /api/tore/balance/:address
  */
 router.get('/balance/:address', getBalance);
-
-/**
- * 토큰 전송
- * POST /api/tore/transfer
- * Body: { to: string, amount: string }
- */
-router.post('/transfer', transfer);
 
 /**
  * 토큰 민팅

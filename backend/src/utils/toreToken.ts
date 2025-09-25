@@ -139,30 +139,6 @@ export async function getTokenBalance(address: string): Promise<string> {
 }
 
 /**
- * 토큰 전송
- * 
- * @param to - 받을 주소
- * @param amount - 전송할 토큰 양 (문자열 형태)
- * @returns Promise<string> - 트랜잭션 해시
- */
-export async function transferTokens(to: string, amount: string): Promise<string> {
-  try {
-    const contract = await getToreTokenContractWithWallet();
-    const decimals = await contract.decimals();
-    const amountWei = ethers.parseUnits(amount, decimals);
-    
-    const tx = await contract.transfer(to, amountWei);
-    await tx.wait();
-    
-    console.log(`[ToreToken] Transfer completed: ${amount} TORE to ${to}`);
-    return tx.hash;
-  } catch (error) {
-    console.error('[ToreToken] Failed to transfer tokens:', error);
-    throw error;
-  }
-}
-
-/**
  * 게임 보상 지급
  * 
  * @param player - 보상을 받을 플레이어 주소

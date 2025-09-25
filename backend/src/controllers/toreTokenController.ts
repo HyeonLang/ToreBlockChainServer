@@ -1,16 +1,17 @@
 /**
- * ToreToken 컨트롤러
+ * ToreToken 컨트롤러 (레거시 - 단일 토큰 시스템)
  * 
  * 기능:
  * - ToreToken ERC-20 토큰 관련 API 엔드포인트 제공
- * - 토큰 잔액 조회, 전송, 민팅, 소각
+ * - 토큰 잔액 조회, 민팅, 소각
  * - 게임 보상 지급 및 배치 전송
  * - 게임 컨트랙트 및 매니저 관리
  * - 지갑별 전송 내역 조회
  * 
+ * 주의: 새로운 토큰 생성은 MultiTokenFactory 사용 권장
+ * 
  * 지원 엔드포인트:
  * - GET /api/tore/balance/:address - 토큰 잔액 조회
- * - POST /api/tore/transfer - 토큰 전송
  * - POST /api/tore/mint - 토큰 민팅
  * - POST /api/tore/burn - 토큰 소각
  * - POST /api/tore/reward - 게임 보상 지급
@@ -24,7 +25,6 @@
 import { Request, Response } from 'express';
 import {
   getTokenBalance,
-  transferTokens,
   distributeGameReward,
   batchTransfer,
   addGameContract,
@@ -69,51 +69,6 @@ export async function getBalance(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       error: 'Failed to get token balance'
-    });
-  }
-}
-
-/**
- * 토큰 전송
- * 
- * @param req - Express 요청 객체
- * @param res - Express 응답 객체
- */
-export async function transfer(req: Request, res: Response) {
-  try {
-    const { to, amount } = req.body;
-    
-    // 입력 검증
-    if (!to || !to.match(/^0x[a-fA-F0-9]{40}$/)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid recipient address format'
-      });
-    }
-    
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid amount'
-      });
-    }
-    
-    const txHash = await transferTokens(to, amount);
-    
-    res.json({
-      success: true,
-      data: {
-        transactionHash: txHash,
-        to,
-        amount,
-        symbol: 'TORE'
-      }
-    });
-  } catch (error) {
-    console.error('[ToreToken Controller] Transfer error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to transfer tokens'
     });
   }
 }

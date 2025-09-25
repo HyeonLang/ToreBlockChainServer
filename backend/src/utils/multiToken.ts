@@ -343,26 +343,25 @@ export async function mintToken(symbol: string, to: string, amount: string): Pro
 }
 
 /**
- * 특정 토큰 전송
+ * 특정 토큰 소각
  * 
  * @param symbol 토큰 심볼
- * @param to 받을 주소
- * @param amount 전송할 토큰 양
+ * @param amount 소각할 토큰 양
  * @returns Promise<string> - 트랜잭션 해시
  */
-export async function transferToken(symbol: string, to: string, amount: string): Promise<string> {
+export async function burnToken(symbol: string, amount: string): Promise<string> {
   try {
     const tokenInfo = await getTokenInfo(symbol);
     const tokenContract = await getTokenContractWithWallet(tokenInfo.contractAddress);
     
     const amountWei = ethers.parseUnits(amount, tokenInfo.decimals);
-    const tx = await tokenContract.transfer(to, amountWei);
+    const tx = await tokenContract.burn(amountWei);
     await tx.wait();
     
-    console.log(`[MultiToken] Token transferred: ${amount} ${symbol} to ${to}`);
+    console.log(`[MultiToken] Token burned: ${amount} ${symbol}`);
     return tx.hash;
   } catch (error) {
-    console.error('[MultiToken] Failed to transfer token:', error);
+    console.error('[MultiToken] Failed to burn token:', error);
     throw error;
   }
 }
