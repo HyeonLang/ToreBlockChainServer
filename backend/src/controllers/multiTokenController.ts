@@ -1,34 +1,20 @@
 /**
- * MultiToken 컨트롤러 - ERC-20 토큰 발행 및 관리 시스템
+ * MultiToken 컨트롤러
  * 
  * 기능:
- * - MultiTokenFactory 스마트 컨트랙트를 통한 다중 ERC-20 토큰 관리
- * - 새로운 토큰 생성 및 배포 (이름, 심볼, 소수점, 초기 공급량 설정)
- * - 토큰별 독립적인 민팅(발급), 소각(burn) 기능
- * - 토큰 정보 조회 (이름, 심볼, 컨트랙트 주소, 총 공급량 등)
- * - 지갑별 토큰 잔액 조회 및 관리
- * - 팩토리 컨트랙트 연결 상태 모니터링
+ * - 다중 토큰 팩토리를 통한 여러 종류의 토큰 관리
+ * - 토큰 생성, 조회, 민팅, 소각
+ * - 각 토큰별 독립적인 잔액 관리
+ * - 토큰 목록 조회 및 정보 관리
  * 
- * 지원 API 엔드포인트:
- * - POST /api/multi-token/create - 새 ERC-20 토큰 생성 및 배포
- * - GET /api/multi-token/list - 생성된 모든 토큰 목록 조회
- * - GET /api/multi-token/active - 활성 상태인 토큰 목록 조회
- * - GET /api/multi-token/info/:symbol - 특정 토큰의 상세 정보 조회
- * - GET /api/multi-token/balance/:symbol/:address - 특정 지갑의 토큰 잔액 조회
- * - POST /api/multi-token/mint - 특정 토큰의 추가 발급(민팅)
- * - POST /api/multi-token/burn - 특정 토큰의 소각(토큰 삭제)
- * - GET /api/multi-token/connection - 팩토리 컨트랙트 연결 상태 확인
- * 
- * 특징:
- * - 각 토큰은 독립적인 컨트랙트 주소를 가짐
- * - 토큰별 고유한 이름, 심볼, 소수점 설정 가능
- * - ERC-20 표준을 완전히 준수하는 토큰 생성
- * - 블록체인 트랜잭션 해시 반환으로 추적 가능
- * 
- * 사용 예시:
- * - 게임 내 화폐, 보상 토큰, 스테이킹 토큰 등 다양한 용도의 토큰 생성
- * - 게임 보상 지급을 위한 토큰 민팅
- * - 토큰 경제 조절을 위한 소각 기능
+ * 지원 엔드포인트:
+ * - POST /api/multi-token/create - 새 토큰 생성
+ * - GET /api/multi-token/list - 모든 토큰 목록 조회
+ * - GET /api/multi-token/info/:symbol - 특정 토큰 정보 조회
+ * - GET /api/multi-token/balance/:symbol/:address - 특정 토큰 잔액 조회
+ * - POST /api/multi-token/mint - 특정 토큰 민팅
+ * - POST /api/multi-token/burn - 특정 토큰 소각
+ * - GET /api/multi-token/active - 활성 토큰 목록 조회
  */
 
 import { Request, Response } from 'express';
