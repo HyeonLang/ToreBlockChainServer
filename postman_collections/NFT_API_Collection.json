@@ -1,0 +1,441 @@
+{
+  "info": {
+    "name": "NFT API Collection",
+    "description": "NFT 관련 블록체인 상호작용 API",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/nft",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "컨트랙트 주소 조회",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/contract-address",
+          "host": ["{{baseUrl}}"],
+          "path": ["contract-address"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contract-address",
+              "host": ["{{baseUrl}}"],
+              "path": ["contract-address"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"address\": \"0x1234567890123456789012345678901234567890\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "NFT 민팅 (기존 방식)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"tokenURI\": \"https://ipfs.io/ipfs/QmYourMetadataHash\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mint",
+          "host": ["{{baseUrl}}"],
+          "path": ["mint"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"tokenURI\": \"https://ipfs.io/ipfs/QmYourMetadataHash\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mint",
+              "host": ["{{baseUrl}}"],
+              "path": ["mint"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\",\n  \"tokenId\": 1,\n  \"contractAddress\": \"0x1234567890123456789012345678901234567890\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "NFT 민팅 (Java 방식)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"itemId\": 1,\n  \"userEquipItemId\": 100,\n  \"itemData\": {\n    \"name\": \"Sword\",\n    \"rarity\": \"Legendary\",\n    \"stats\": {\n      \"attack\": 100,\n      \"defense\": 50\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mint",
+          "host": ["{{baseUrl}}"],
+          "path": ["mint"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"itemId\": 1,\n  \"userEquipItemId\": 100,\n  \"itemData\": {\n    \"name\": \"Sword\",\n    \"rarity\": \"Legendary\",\n    \"stats\": {\n      \"attack\": 100,\n      \"defense\": 50\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mint",
+              "host": ["{{baseUrl}}"],
+              "path": ["mint"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\",\n  \"tokenId\": 1,\n  \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n  \"mintedTo\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"itemId\": 1,\n  \"userEquipItemId\": 100,\n  \"itemDataIncluded\": true\n}"
+        }
+      ]
+    },
+    {
+      "name": "NFT 전송",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from\": \"0x1111111111111111111111111111111111111111\",\n  \"to\": \"0x2222222222222222222222222222222222222222\",\n  \"tokenId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transfer",
+          "host": ["{{baseUrl}}"],
+          "path": ["transfer"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"0x1111111111111111111111111111111111111111\",\n  \"to\": \"0x2222222222222222222222222222222222222222\",\n  \"tokenId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "NFT 소각",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/burn",
+          "host": ["{{baseUrl}}"],
+          "path": ["burn"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokenId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/burn",
+              "host": ["{{baseUrl}}"],
+              "path": ["burn"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "지갑 NFT 목록 조회",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/wallet?walletAddress=0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+          "host": ["{{baseUrl}}"],
+          "path": ["wallet"],
+          "query": [
+            {
+              "key": "walletAddress",
+              "value": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/wallet?walletAddress=0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallet"],
+              "query": [
+                {
+                  "key": "walletAddress",
+                  "value": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"nfts\": [\n    {\n      \"tokenId\": 1,\n      \"owner\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n      \"tokenURI\": \"https://ipfs.io/ipfs/QmYourMetadataHash\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "특정 NFT 조회",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["1"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["1"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"owner\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"tokenURI\": \"https://ipfs.io/ipfs/QmYourMetadataHash\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "NFT 거래 이력 조회",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/1/history",
+          "host": ["{{baseUrl}}"],
+          "path": ["1", "history"]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "history"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"tokenId\": 1,\n  \"transactions\": [\n    {\n      \"from\": \"0x0000000000000000000000000000000000000000\",\n      \"to\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n      \"tokenId\": 1,\n      \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\",\n      \"blockNumber\": 12345678,\n      \"timestamp\": 1640995200,\n      \"type\": \"mint\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "지갑 NFT 거래 이력 조회",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/wallet/history?walletAddress=0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+          "host": ["{{baseUrl}}"],
+          "path": ["wallet", "history"],
+          "query": [
+            {
+              "key": "walletAddress",
+              "value": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "성공 응답",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/history?walletAddress=0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallet", "history"],
+              "query": [
+                {
+                  "key": "walletAddress",
+                  "value": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n  \"transactions\": [\n    {\n      \"from\": \"0x0000000000000000000000000000000000000000\",\n      \"to\": \"0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6\",\n      \"tokenId\": 1,\n      \"txHash\": \"0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\",\n      \"blockNumber\": 12345678,\n      \"timestamp\": 1640995200,\n      \"type\": \"mint\",\n      \"direction\": \"received\"\n    }\n  ]\n}"
+        }
+      ]
+    }
+  ]
+}
