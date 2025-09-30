@@ -1,3 +1,25 @@
+/**
+ * ToreBlockChainServer API 문서화
+ * 
+ * 기능:
+ * - ToreBlockChainServer 프로젝트의 모든 API 엔드포인트를 Postman 형식으로 정리
+ * - 블록체인 기반 NFT 및 토큰 관리 시스템 API 테스트
+ * - 다중 토큰 팩토리 및 NFT 컨트랙트 연동
+ * - RESTful API 설계 원칙 준수
+ * 
+ * 지원 컬렉션:
+ * - MultiToken API Collection: 다중 토큰 팩토리 관리
+ * - NFT API Collection: NFT 민팅, 전송, 조회
+ * - ToreToken API Collection: 레거시 토큰 시스템
+ * - V1 API Collection: RESTful API v1 버전
+ * 
+ * 사용법:
+ * 1. Postman에서 컬렉션 import
+ * 2. 환경 변수 설정 (baseUrl 등)
+ * 3. API 엔드포인트 테스트
+ * 4. 응답 결과 확인 및 검증
+ */
+
 # ToreBlockChainServer API 문서화
 
 이 폴더에는 ToreBlockChainServer 프로젝트의 모든 API 엔드포인트를 Postman 형식으로 정리한 컬렉션들이 포함되어 있습니다.

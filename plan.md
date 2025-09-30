@@ -1,3 +1,29 @@
+/**
+ * NFT·토큰 발행량 실시간 모니터링 및 동적 제어 시스템 설계서
+ * 
+ * 기능:
+ * - Avalanche C-Chain(EVM) 기반 게임 경제 시스템
+ * - NFT·토큰 발행량 실시간 모니터링
+ * - DB와 온체인 데이터 교차검증
+ * - 지갑별 보유현황 정확한 산출
+ * - 주기적/실시간 발행량(Emission Cap) 동적 조절
+ * - 특정 컨트랙트와 NFT tokenId 부분 숫자 패턴 필터링
+ * 
+ * 기술 스택:
+ * - 블록체인: Avalanche C-Chain (EVM 호환)
+ * - 백엔드: Node.js, Express.js, TypeScript
+ * - 데이터베이스: PostgreSQL, TimescaleDB
+ * - 실시간 처리: WebSocket, 이벤트 스트리밍
+ * - 모니터링: Prometheus, Grafana
+ * 
+ * 주요 구성요소:
+ * - 실시간 이벤트 수집기
+ * - 데이터 정합성 검증 시스템
+ * - 동적 발행량 제어 엔진
+ * - 관리자 대시보드
+ * - API 엔드포인트
+ */
+
 # NFT·토큰 발행량 실시간 모니터링 및 동적 제어 시스템 설계서
 
 # 0. 목적 및 범위

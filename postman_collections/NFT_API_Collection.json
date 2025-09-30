@@ -1,3 +1,28 @@
+/**
+ * NFT API Collection - Postman 컬렉션
+ * 
+ * 기능:
+ * - NFT 관련 블록체인 상호작용 API 테스트
+ * - GameItem ERC-721 컨트랙트 연동
+ * - NFT 민팅, 전송, 소각, 조회 기능
+ * - 지갑별 NFT 목록 및 거래 이력 조회
+ * 
+ * 지원 엔드포인트:
+ * - GET /api/nft/contract-address - 컨트랙트 주소 조회
+ * - POST /api/nft/mint - NFT 민팅 (기존 방식 및 Java 방식)
+ * - POST /api/nft/transfer - NFT 전송
+ * - POST /api/nft/burn - NFT 소각
+ * - GET /api/nft/wallet - 지갑 NFT 목록 조회
+ * - GET /api/nft/:tokenId - 특정 NFT 조회
+ * - GET /api/nft/:tokenId/history - NFT 거래 이력 조회
+ * - GET /api/nft/wallet/history - 지갑 거래 이력 조회
+ * 
+ * 사용법:
+ * 1. Postman에서 이 컬렉션을 import
+ * 2. baseUrl 변수를 서버 주소로 설정
+ * 3. 각 요청의 파라미터를 수정하여 테스트
+ * 4. 응답 결과를 확인하여 API 동작 검증
+ */
 {
   "info": {
     "name": "NFT API Collection",
