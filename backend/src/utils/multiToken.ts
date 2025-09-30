@@ -207,7 +207,7 @@ export async function createToken(
     const decimalsNum = parseInt(decimals.toString());
     const initialSupplyWei = ethers.parseUnits(initialSupply, decimalsNum);
     
-    const tx = await factory.createToken(name, symbol, decimalsNum, initialSupplyWei, owner || ethers.ZeroAddress);
+    const tx = await factory.createToken(name, symbol, decimalsNum, initialSupplyWei, owner ? ethers.getAddress(owner) : ethers.ZeroAddress);
     await tx.wait();
     
     console.log(`[MultiToken] Token created: ${name} (${symbol})`);
@@ -233,9 +233,9 @@ export async function getAllTokens(): Promise<TokenInfo[]> {
       symbol: token.symbol,
       contractAddress: token.contractAddress,
       totalSupply: ethers.formatUnits(token.totalSupply, token.decimals),
-      decimals: token.decimals,
+      decimals: Number(token.decimals),
       owner: token.owner,
-      createdAt: token.createdAt,
+      createdAt: Number(token.createdAt),
       isActive: token.isActive
     }));
   } catch (error) {
@@ -259,9 +259,9 @@ export async function getActiveTokens(): Promise<TokenInfo[]> {
       symbol: token.symbol,
       contractAddress: token.contractAddress,
       totalSupply: ethers.formatUnits(token.totalSupply, token.decimals),
-      decimals: token.decimals,
+      decimals: Number(token.decimals),
       owner: token.owner,
-      createdAt: token.createdAt,
+      createdAt: Number(token.createdAt),
       isActive: token.isActive
     }));
   } catch (error) {
@@ -286,9 +286,9 @@ export async function getTokenInfo(symbol: string): Promise<TokenInfo> {
       symbol: token.symbol,
       contractAddress: token.contractAddress,
       totalSupply: ethers.formatUnits(token.totalSupply, token.decimals),
-      decimals: token.decimals,
+      decimals: Number(token.decimals),
       owner: token.owner,
-      createdAt: token.createdAt,
+      createdAt: Number(token.createdAt),
       isActive: token.isActive
     };
   } catch (error) {
