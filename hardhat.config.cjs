@@ -1,3 +1,23 @@
+/**
+ * Hardhat 설정 파일
+ * 
+ * 기능:
+ * - Solidity 컴파일러 설정
+ * - 네트워크 설정 (Hardhat, Fuji, Avalanche)
+ * - 경로 설정 (컨트랙트, 테스트, 캐시, 아티팩트)
+ * - TypeChain 설정 (TypeScript 타입 생성)
+ * 
+ * 네트워크:
+ * - hardhat: 로컬 개발 네트워크
+ * - fuji: Avalanche Fuji 테스트넷
+ * - avalanche: Avalanche 메인넷
+ * 
+ * 환경변수:
+ * - PRIVATE_KEY: 배포자 개인키
+ * - FUJI_RPC_URL: Fuji 테스트넷 RPC URL
+ * - AVALANCHE_RPC_URL: Avalanche 메인넷 RPC URL
+ */
+
 require('dotenv').config();
 require('@nomicfoundation/hardhat-toolbox');
 require('ts-node/register');

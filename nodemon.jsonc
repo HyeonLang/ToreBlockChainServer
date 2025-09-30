@@ -1,3 +1,19 @@
+/**
+ * Nodemon 설정 파일
+ * 
+ * 기능:
+ * - 백엔드 개발 시 파일 변경 감지 및 자동 재시작
+ * - TypeScript, JavaScript, JSON 파일 변경 감지
+ * - 테스트 파일 제외
+ * - ts-node를 통한 TypeScript 직접 실행
+ * 
+ * 감시 대상:
+ * - src 디렉토리의 모든 파일
+ * - .ts, .js, .json 확장자
+ * 
+ * 제외 대상:
+ * - src/**/*.spec.ts (테스트 파일)
+ */
 {
   "watch": ["src"],
   "ext": "ts,js,json",
