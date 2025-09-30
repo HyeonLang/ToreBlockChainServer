@@ -1,21 +1,35 @@
 /**
- * 메인 애플리케이션 진입점
+ * ToreBlockChainServer - 메인 애플리케이션 진입점
+ * 
+ * 기능:
+ * - Express.js 기반 REST API 서버
+ * - MultiTokenFactory를 통한 ERC-20 토큰 발행 및 관리
+ * - 블록체인 네트워크와의 연결 및 상호작용
+ * - 환경 변수 기반 설정 관리
+ * - 전역 에러 핸들링 및 로깅
  * 
  * 실행 흐름:
- * 1. 환경 변수 로드 (.env 파일)
- * 2. Express 서버 초기화
- * 3. 미들웨어 설정 (JSON 파싱)
- * 4. 라우트 등록
- * 5. 서버 시작 (포트 3000 또는 환경변수 PORT)
+ * 1. 환경 변수 로드 (.env 파일에서 블록체인 설정)
+ * 2. Express 서버 초기화 및 미들웨어 설정
+ * 3. JSON 파싱 미들웨어 등록
+ * 4. MultiToken API 라우트 등록
+ * 5. 전역 에러 핸들러 등록
+ * 6. 서버 시작 (포트 3000 또는 환경변수 PORT)
+ * 
+ * 제공 API:
+ * - GET /health - 서버 상태 확인
+ * - /api/multi-token/* - ERC-20 토큰 발행 및 관리 API
+ * 
+ * 주의사항:
+ * - NFT 관련 기능은 별도의 nftblockchainserver에서 처리
+ * - 단일 ToreToken 시스템은 레거시로 분류, MultiTokenFactory 사용 권장
+ * - 모든 API는 인증 없이 접근 가능 (내부 네트워크용)
  */
 
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
-import nftRouter from "./routes/nft";
-import v1Router from "./routes/v1";
-import toreTokenRouter from "./routes/toreToken";
 import multiTokenRouter from "./routes/multiToken";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -67,33 +81,12 @@ app.get("/health", (_req, res) => {
 
 
 /**
- * ToreToken 관련 라우터 등록 (인증 없음)
- * /api/tore 경로로 들어오는 모든 요청에 인증 없이 접근 가능
- * 예: /api/tore/info, /api/tore/balance/:address, /api/tore/transfer
- */
-app.use("/api/tore", toreTokenRouter);
-
-/**
- * MultiToken 관련 라우터 등록 (인증 없음)
- * /api/multi-token 경로로 들어오는 모든 요청에 인증 없이 접근 가능
+ * MultiToken 관련 라우터 등록 (ERC20 토큰 발행 기능)
+ * /api/multi-token 경로로 들어오는 모든 요청에 접근 가능
+ * 제공 기능: 토큰 생성, 민팅, 소각, 잔액 조회 등
  * 예: /api/multi-token/create, /api/multi-token/mint, /api/multi-token/balance/:symbol/:address
  */
 app.use("/api/multi-token", multiTokenRouter);
-
-
-/**
- * NFT 관련 라우터 등록 (인증 없음)
- * /api/nft 경로로 들어오는 모든 요청에 인증 없이 접근 가능
- * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
- */
-app.use("/api/blockchain/nft", nftRouter);
-
-/**
- * v1 API 라우터 등록 (인증 없음)
- * /v1 경로로 들어오는 모든 요청에 인증 없이 접근 가능
- * 예: /v1/nfts/mint, /v1/nfts/transfer
- */
-app.use("/v1", v1Router);
 
 // 전역 에러 핸들러 (항상 라우터 다음에 위치)
 app.use(errorHandler);
