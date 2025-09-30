@@ -14,8 +14,6 @@ import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 import nftRouter from "./routes/nft";
-import v1Router from "./routes/v1";
-import toreTokenRouter from "./routes/toreToken";
 import multiTokenRouter from "./routes/multiToken";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -67,19 +65,11 @@ app.get("/health", (_req, res) => {
 
 
 /**
- * ToreToken 관련 라우터 등록 (인증 없음)
- * /api/tore 경로로 들어오는 모든 요청에 인증 없이 접근 가능
- * 예: /api/tore/info, /api/tore/balance/:address, /api/tore/transfer
- */
-app.use("/api/tore", toreTokenRouter);
-
-/**
  * MultiToken 관련 라우터 등록 (인증 없음)
  * /api/multi-token 경로로 들어오는 모든 요청에 인증 없이 접근 가능
  * 예: /api/multi-token/create, /api/multi-token/mint, /api/multi-token/balance/:symbol/:address
  */
 app.use("/api/multi-token", multiTokenRouter);
-
 
 /**
  * NFT 관련 라우터 등록 (인증 없음)
@@ -87,13 +77,6 @@ app.use("/api/multi-token", multiTokenRouter);
  * 예: /api/nft/mint, /api/nft/burn, /api/nft/address
  */
 app.use("/api/blockchain/nft", nftRouter);
-
-/**
- * v1 API 라우터 등록 (인증 없음)
- * /v1 경로로 들어오는 모든 요청에 인증 없이 접근 가능
- * 예: /v1/nfts/mint, /v1/nfts/transfer
- */
-app.use("/v1", v1Router);
 
 // 전역 에러 핸들러 (항상 라우터 다음에 위치)
 app.use(errorHandler);
