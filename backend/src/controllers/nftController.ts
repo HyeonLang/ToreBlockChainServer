@@ -3,7 +3,7 @@
  * 
  * 기능:
  * - 블록체인과의 상호작용 처리
- * - NFT 민팅, 전송, 소각, 조회
+ * - NFT 민팅, 소각, 조회
  * - NFT 거래 이력 조회
  * - 에러 처리 및 응답 포맷팅
  * 
@@ -14,7 +14,6 @@
  * 
  * 사용되는 스마트 컨트랙트 함수:
  * - mint(address to, string tokenURI) - NFT 생성
- * - transferFrom(address from, address to, uint256 tokenId) - NFT 전송
  * - burn(uint256 tokenId) - NFT 소각
  * - ownerOf(uint256 tokenId) - NFT 소유자 조회
  * - tokenURI(uint256 tokenId) - NFT 메타데이터 URI 조회
@@ -426,87 +425,6 @@ export async function mintNftController(req: Request, res: Response) {
   }
 }
 
-/**
- * NFT 전송 컨트롤러
- * 
- * 실행 흐름:
- * 1. 요청 본문에서 from(보내는 주소), to(받는 주소), tokenId 추출
- * 2. 필수 파라미터 검증
- * 3. 블록체인 컨트랙트 인스턴스 생성
- * 4. transferFrom 함수 호출하여 NFT 전송
- * 5. 트랜잭션 해시 반환
- * 
- * @param req - Express Request 객체
- * @param res - Express Response 객체
- * @returns { txHash: string } - 트랜잭션 해시
- * @throws 400 - 필수 파라미터 누락 시
- * @throws 500 - 블록체인 상호작용 실패 시
- */
-export async function transferNftController(req: Request, res: Response) {
-  try {
-    // 요청 본문에서 파라미터 추출
-    const { from, to, tokenId } = req.body as { from: string; to: string; tokenId: string | number };
-    
-    // 필수 파라미터 및 형식 검증
-    console.log('[transfer] 주소 검증 디버깅:', {
-      from: from,
-      to: to,
-      typeof_from: typeof from,
-      typeof_to: typeof to,
-      from_length: from?.length,
-      to_length: to?.length,
-      from_regex_test: from ? /^0x[a-fA-F0-9]{40}$/.test(from) : false,
-      to_regex_test: to ? /^0x[a-fA-F0-9]{40}$/.test(to) : false
-    });
-    
-    if (!from || typeof from !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(from)) {
-      console.log('[transfer] from 주소 검증 실패:', { from, type: typeof from });
-      return res.status(400).json({ 
-        error: "Invalid 'from' address",
-        details: {
-          received: from,
-          type: typeof from,
-          length: from?.length,
-          expected: "0x + 40 hex characters (total 42 chars)"
-        }
-      });
-    }
-    if (!to || typeof to !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
-      console.log('[transfer] to 주소 검증 실패:', { to, type: typeof to });
-      return res.status(400).json({ 
-        error: "Invalid 'to' address",
-        details: {
-          received: to,
-          type: typeof to,
-          length: to?.length,
-          expected: "0x + 40 hex characters (total 42 chars)"
-        }
-      });
-    }
-    if (tokenId === undefined || tokenId === null) {
-      return res.status(400).json({ error: "Missing tokenId" });
-    }
-    const numeric = typeof tokenId === "string" ? Number(tokenId) : tokenId;
-    if (!Number.isInteger(numeric) || numeric < 0) {
-      return res.status(400).json({ error: "Invalid tokenId" });
-    }
-
-    // 블록체인 컨트랙트 인스턴스 생성
-    const contract = await getContract();
-    
-    // NFT 전송 트랜잭션 실행
-    const tx = await contract.transferFrom(from, to, BigInt(tokenId));
-    
-    // 트랜잭션 완료 대기 및 영수증 획득
-    const receipt = await tx.wait();
-    
-    // 트랜잭션 해시 반환
-    return res.json({ txHash: receipt?.hash ?? tx.hash });
-  } catch (err: any) {
-    // 에러 처리 및 500 상태코드로 응답
-    return res.status(500).json({ error: err.message || "Transfer failed" });
-  }
-}
 
 /**
  * NFT 소각 컨트롤러

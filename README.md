@@ -29,7 +29,7 @@ Avalanche Fuji/Mainnet 배포 가능한 ERC721(GameItem) 컨트랙트, ERC20(Tor
 - **API 키 인증**: `x-api-key` 헤더 지원 (선택)
 - **하이브리드 인증**: JWT 또는 API 키 중 하나로 인증 가능
 - **레이트 리미팅**: 인메모리 토큰 버킷 방식 (기본 60req/분)
-- **완전한 CRUD**: 생성, 조회, 전송, 삭제 모든 기능
+- **완전한 CRUD**: 생성, 조회, 삭제 모든 기능
 - **사용자 관리**: 등록, 로그인, 프로필 관리
 
 ## 🛠️ 기술 스택
@@ -142,13 +142,7 @@ npm start
 5. MetaMask에서 트랜잭션 승인
 6. 생성 완료 후 자동으로 지갑에 NFT 추가
 
-### 4. NFT 전송
-1. **전송** 탭 선택
-2. 보내는 주소, 받는 주소, 토큰 ID 입력
-3. "NFT 전송하기" 버튼 클릭
-4. MetaMask에서 트랜잭션 승인
-
-### 5. NFT 삭제
+### 4. NFT 삭제
 1. **삭제** 탭 선택
 2. 삭제할 토큰 ID 입력
 3. "NFT 삭제하기" 버튼 클릭
@@ -288,16 +282,6 @@ curl -X POST http://localhost:3000/v1/nfts \
   }'
 ```
 
-#### NFT 전송
-```bash
-curl -X PATCH http://localhost:3000/v1/nfts/1/transfer \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -d '{
-    "fromWalletAddress": "0x1111111111111111111111111111111111111111",
-    "toWalletAddress": "0x2222222222222222222222222222222222222222"
-  }'
-```
 
 #### NFT 삭제
 ```bash
@@ -409,16 +393,6 @@ curl -X POST http://localhost:3000/api/nft/mint \
   }'
 ```
 
-#### NFT 전송
-```bash
-curl -X POST http://localhost:3000/api/nft/transfer \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from": "0x1111111111111111111111111111111111111111",
-    "to": "0x2222222222222222222222222222222222222222",
-    "tokenId": 1
-  }'
-```
 
 #### NFT 삭제
 ```bash
@@ -646,8 +620,7 @@ npm start
 1. `http://localhost:3000` 접속
 2. MetaMask 연결
 3. NFT 생성 테스트
-4. 생성된 NFT 전송 테스트
-5. NFT 조회 테스트
+4. NFT 조회 테스트
 
 ### API 테스트
 ```bash
