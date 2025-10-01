@@ -25,6 +25,85 @@ import { Request, Response } from "express";
 import { getContract } from "../utils/contract";
 
 /**
+ * 구조화된 메타데이터 형식을 검증하는 함수
+ * 
+ * @param itemData - 검증할 메타데이터 객체
+ * @returns 검증 결과와 오류 메시지들
+ */
+function validateStructuredMetadata(itemData: any): {isValid: boolean, errors: string[]} {
+  const errors: string[] = [];
+  
+  // 필수 필드 검증
+  if (!itemData.name || typeof itemData.name !== 'string') {
+    errors.push("name is required and must be a string");
+  }
+  
+  if (!itemData.description || typeof itemData.description !== 'string') {
+    errors.push("description is required and must be a string");
+  }
+  
+  if (!itemData.image || typeof itemData.image !== 'string') {
+    errors.push("image is required and must be a string");
+  }
+  
+  if (!itemData.external_url || typeof itemData.external_url !== 'string') {
+    errors.push("external_url is required and must be a string");
+  }
+  
+  // attributes 검증
+  if (!Array.isArray(itemData.attributes)) {
+    errors.push("attributes must be an array");
+  } else {
+    itemData.attributes.forEach((attr: any, index: number) => {
+      if (!attr.trait_type || typeof attr.trait_type !== 'string') {
+        errors.push(`attributes[${index}].trait_type is required and must be a string`);
+      }
+      if (attr.value === undefined || attr.value === null) {
+        errors.push(`attributes[${index}].value is required`);
+      }
+    });
+  }
+  
+  // game_data 검증
+  if (!itemData.game_data || typeof itemData.game_data !== 'object') {
+    errors.push("game_data is required and must be an object");
+  } else {
+    if (!itemData.game_data.id || typeof itemData.game_data.id !== 'string') {
+      errors.push("game_data.id is required and must be a string");
+    }
+    if (!itemData.game_data.item_id || typeof itemData.game_data.item_id !== 'string') {
+      errors.push("game_data.item_id is required and must be a string");
+    }
+    // nft_id는 민팅 전이므로 null이거나 없을 수 있음
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors: errors
+  };
+}
+
+/**
+ * 메타데이터에 nft_id를 업데이트하는 함수
+ * 
+ * @param metadata - 업데이트할 메타데이터 객체
+ * @param nftId - 설정할 NFT ID
+ * @returns 업데이트된 메타데이터
+ */
+function updateMetadataWithNftId(metadata: any, nftId: number): any {
+  const updatedMetadata = { ...metadata };
+  
+  if (updatedMetadata.game_data) {
+    updatedMetadata.game_data = {
+      ...updatedMetadata.game_data,
+      nft_id: nftId
+    };
+  }
+  
+  return updatedMetadata;
+}
+
+/**
  * 컨트랙트 주소 조회 컨트롤러
  * 
  * 실행 흐름:
@@ -261,33 +340,48 @@ export async function mintNftController(req: Request, res: Response) {
       walletAddress, 
       itemId, 
       userEquipItemId, 
-      itemData,
-      // 기존 방식도 지원 (하위 호환성)
-      to,
-      tokenURI 
+      itemData
     } = req.body as { 
       walletAddress?: string;
       itemId?: number;
       userEquipItemId?: number;
       itemData?: any;
-      to?: string;
-      tokenURI?: string;
     };
     
-    // 주소 결정 (Java 방식 우선, 기존 방식 fallback)
-    const targetAddress = walletAddress || to;
+    // 주소 결정
+    const targetAddress = walletAddress;
     
-    // tokenURI 결정 (itemData를 JSON 문자열로 변환하거나 기존 tokenURI 사용)
-    let finalTokenURI = tokenURI;
-    if (itemData && !tokenURI) {
-      // itemData가 있으면 JSON 문자열로 변환하여 tokenURI로 사용
-      finalTokenURI = typeof itemData === 'string' ? itemData : JSON.stringify(itemData);
+    // tokenURI 결정 (구조화된 메타데이터 처리)
+    let finalTokenURI: string;
+    let structuredMetadata = null;
+    
+    if (itemData) {
+      if (typeof itemData === 'string') {
+        finalTokenURI = itemData;
+      } else {
+        // 구조화된 메타데이터 형식 검증
+        const validationResult = validateStructuredMetadata(itemData);
+        if (!validationResult.isValid) {
+          return res.status(400).json({
+            error: "Invalid structured metadata format",
+            details: validationResult.errors
+          });
+        }
+        
+        // 검증된 메타데이터를 저장 (나중에 nft_id 업데이트용)
+        structuredMetadata = itemData;
+        finalTokenURI = JSON.stringify(itemData);
+      }
+    } else {
+      return res.status(400).json({
+        error: "itemData is required",
+        details: "itemData must be provided for NFT minting"
+      });
     }
     
     // 필수 파라미터 및 형식 검증
     console.log('[mint] 주소 검증 디버깅:', {
       walletAddress: walletAddress,
-      to: to,
       targetAddress: targetAddress,
       typeof_targetAddress: typeof targetAddress,
       targetAddress_length: targetAddress?.length,
@@ -325,18 +419,16 @@ export async function mintNftController(req: Request, res: Response) {
       });
     }
     
-    // Java 요청 전용 필드 검증 (선택사항)
-    if (walletAddress && itemId !== undefined) {
-      if (typeof itemId !== "number" || itemId <= 0) {
-        return res.status(400).json({ 
-          error: "Invalid itemId",
-          details: {
-            received: itemId,
-            type: typeof itemId,
-            expected: "Positive integer"
-          }
-        });
-      }
+    // itemId 필수 검증
+    if (!itemId || typeof itemId !== "number" || itemId <= 0) {
+      return res.status(400).json({ 
+        error: "Invalid itemId",
+        details: {
+          received: itemId,
+          type: typeof itemId,
+          expected: "Positive integer"
+        }
+      });
     }
     
     if (walletAddress && userEquipItemId !== undefined) {
@@ -351,34 +443,14 @@ export async function mintNftController(req: Request, res: Response) {
         });
       }
     }
-    // URL 형식 검증 (itemData가 JSON인 경우는 스킵)
-    if (!itemData) {
-      try {
-        const u = new URL(finalTokenURI);
-        if (!["http:", "https:", "ipfs:"].includes(u.protocol)) {
-          return res.status(400).json({ error: "Unsupported tokenURI scheme" });
-        }
-      } catch {
-        return res.status(400).json({ error: "Malformed tokenURI" });
-      }
-    }
+    // itemData가 항상 제공되므로 URL 형식 검증은 불필요
 
     // 블록체인 컨트랙트 인스턴스 생성 (백엔드에서 관리하는 컨트랙트 주소 사용)
     const contract = await getContract();
 
-    // NFT 민팅 트랜잭션 실행
-    console.log('[mint] Minting NFT to:', targetAddress, 'with URI:', finalTokenURI);
-    
-    let tx;
-    if (itemId && typeof itemId === "number") {
-      // itemId가 있으면 새로운 mintWithItemId 함수 사용
-      console.log('[mint] Using mintWithItemId with itemId:', itemId);
-      tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
-    } else {
-      // itemId가 없으면 기존 mint 함수 사용 (하위 호환성)
-      console.log('[mint] Using legacy mint function');
-      tx = await contract.mint(targetAddress, finalTokenURI);
-    }
+    // NFT 민팅 트랜잭션 실행 (mintWithItemId만 사용)
+    console.log('[mint] Minting NFT to:', targetAddress, 'with itemId:', itemId, 'URI:', finalTokenURI);
+    const tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
     
     console.log('[mint] tx sent:', tx.hash);
     
@@ -403,17 +475,28 @@ export async function mintNftController(req: Request, res: Response) {
       }
     }
     
+    // 구조화된 메타데이터가 있는 경우 nft_id 업데이트
+    let updatedMetadata = null;
+    if (structuredMetadata && tokenId !== null) {
+      updatedMetadata = updateMetadataWithNftId(structuredMetadata, tokenId);
+      console.log('[mint] Updated metadata with nft_id:', updatedMetadata);
+    }
+    
     // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환 (Java 요청 정보 포함)
     const payload = { 
       txHash: receipt?.hash ?? tx.hash,
       tokenId: tokenId,
       contractAddress: process.env.CONTRACT_ADDRESS || null,
-      // Java 요청 정보 추가 (디버깅 및 추적용)
+      // 요청 정보 추가 (디버깅 및 추적용)
       ...(walletAddress && {
         mintedTo: targetAddress,
         itemId: itemId,
         userEquipItemId: userEquipItemId,
         itemDataIncluded: !!itemData
+      }),
+      // 업데이트된 메타데이터 정보 (구조화된 메타데이터가 있는 경우)
+      ...(updatedMetadata && {
+        updatedMetadata: updatedMetadata
       })
     };
     console.log('[mint] response:', payload);
