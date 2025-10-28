@@ -22,7 +22,7 @@
  */
 
 import { Request, Response } from "express";
-import { getContract } from "../utils/contract";
+import { getContract, getVaultContract } from "../utils/contract";
 
 /**
  * 구조화된 메타데이터 형식을 검증하는 함수
@@ -836,6 +836,203 @@ export async function getWalletTransactionHistoryController(req: Request, res: R
     // 에러 처리 및 500 상태코드로 응답
     console.error('[getWalletTransactionHistory] error:', err);
     return res.status(500).json({ error: err.message || "Wallet transaction history query failed" });
+  }
+}
+
+/**
+ * NFT 락업 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 요청 본문에서 walletAddress와 tokenId 추출
+ * 2. 필수 파라미터 검증
+ * 3. NFT 컨트랙트 인스턴스 생성 (approve 확인용)
+ * 4. Vault 컨트랙트 인스턴스 생성
+ * 5. NFT 소유자 확인
+ * 6. lockNft 함수 호출하여 NFT 락업
+ * 7. 트랜잭션 해시 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { txHash: string } - 트랜잭션 해시
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function lockNftController(req: Request, res: Response) {
+  try {
+    const { walletAddress, tokenId } = req.body as { 
+      walletAddress: string; 
+      tokenId: string | number 
+    };
+    
+    // 필수 파라미터 검증
+    if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+    
+    if (tokenId === undefined || tokenId === null) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numericTokenId = typeof tokenId === "string" ? Number(tokenId) : tokenId;
+    if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    const nftContract = await getContract();
+    const vaultContract = await getVaultContract();
+    const nftContractAddress = process.env.CONTRACT_ADDRESS;
+    
+    if (!nftContractAddress) {
+      return res.status(500).json({ error: "CONTRACT_ADDRESS not configured" });
+    }
+    
+    // ⚠️ 주의: 현재 구현은 서버 측 지갑을 사용합니다
+    // 이 방식은 보안상 권장되지 않으며, 다음 두 가지 방법 중 하나를 사용해야 합니다:
+    // 1. 사용자가 프론트엔드에서 직접 approve하고 락업 호출
+    // 2. 서명된 메시지 방식 사용
+    
+    // NFT 소유자 확인
+    const owner = await nftContract.ownerOf(BigInt(numericTokenId));
+    const isServerOwner = owner.toLowerCase() === walletAddress.toLowerCase();
+    
+    // 백엔드 지갑이 소유자인 경우에만 락업 진행
+    if (!isServerOwner) {
+      return res.status(400).json({ 
+        error: "Server wallet must own the NFT to lock it",
+        details: {
+          requestedOwner: walletAddress,
+          actualOwner: owner,
+          instructions: "Please transfer the NFT to the server wallet first, or use frontend to lock directly"
+        }
+      });
+    }
+    
+    // NFT 락업 트랜잭션 실행 (서버가 소유자이므로 서버가 호출)
+    const tx = await vaultContract.lockNft(nftContractAddress, BigInt(numericTokenId));
+    
+    // 트랜잭션 완료 대기 및 영수증 획득
+    const receipt = await tx.wait();
+    
+    return res.json({ 
+      txHash: receipt?.hash ?? tx.hash,
+      vaultAddress: process.env.VAULT_ADDRESS || null,
+      message: "NFT locked successfully. The NFT is now in the vault."
+    });
+  } catch (err: any) {
+    console.error('[lockNft] error:', err);
+    return res.status(500).json({ error: err.message || "Lock NFT failed" });
+  }
+}
+
+/**
+ * NFT 락업 해제 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 요청 본문에서 walletAddress와 tokenId 추출
+ * 2. 필수 파라미터 검증
+ * 3. Vault 컨트랙트 인스턴스 생성
+ * 4. unlockNft 함수 호출하여 NFT 락업 해제
+ * 5. 트랜잭션 해시 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { txHash: string } - 트랜잭션 해시
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function unlockNftController(req: Request, res: Response) {
+  try {
+    const { walletAddress, tokenId } = req.body as { 
+      walletAddress: string; 
+      tokenId: string | number 
+    };
+    
+    // 필수 파라미터 검증
+    if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+    
+    if (tokenId === undefined || tokenId === null) {
+      return res.status(400).json({ error: "Missing tokenId" });
+    }
+    const numericTokenId = typeof tokenId === "string" ? Number(tokenId) : tokenId;
+    if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      return res.status(400).json({ error: "Invalid tokenId" });
+    }
+
+    const vaultContract = await getVaultContract();
+    const nftContractAddress = process.env.CONTRACT_ADDRESS;
+    
+    if (!nftContractAddress) {
+      return res.status(500).json({ error: "CONTRACT_ADDRESS not configured" });
+    }
+    
+    // ⚠️ 주의: unlockNft는 Vault 컨트랙트의 함수이며, msg.sender가 보관한 NFT만 꺼낼 수 있습니다
+    // 현재 구현은 서버가 락업했을 때만 작동합니다
+    // 서버가 락업한 NFT를 서버 지갑으로 락업 해제합니다
+    
+    // NFT 락업 해제 트랜잭션 실행
+    const tx = await vaultContract.unlockNft(nftContractAddress, BigInt(numericTokenId));
+    
+    // 트랜잭션 완료 대기 및 영수증 획득
+    const receipt = await tx.wait();
+    
+    return res.json({ 
+      txHash: receipt?.hash ?? tx.hash,
+      vaultAddress: process.env.VAULT_ADDRESS || null,
+      message: "NFT unlocked successfully. The NFT is now back to the server wallet and will be returned to you."
+    });
+  } catch (err: any) {
+    console.error('[unlockNft] error:', err);
+    return res.status(500).json({ error: err.message || "Unlock NFT failed" });
+  }
+}
+
+/**
+ * Vault에 보관된 NFT 목록 조회 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. 쿼리 파라미터에서 walletAddress 추출
+ * 2. 필수 파라미터 검증
+ * 3. Vault 컨트랙트 인스턴스 생성
+ * 4. getVaultedTokens 함수 호출하여 보관된 NFT 목록 조회
+ * 5. NFT 목록 반환
+ * 
+ * @param req - Express Request 객체
+ * @param res - Express Response 객체
+ * @returns { vaultedNfts: Array<number> } - 보관된 NFT 토큰 ID 배열
+ * @throws 400 - 필수 파라미터 누락 시
+ * @throws 500 - 블록체인 상호작용 실패 시
+ */
+export async function getVaultedNftsController(req: Request, res: Response) {
+  try {
+    const { walletAddress } = req.query;
+    
+    // 필수 파라미터 및 형식 검증
+    if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+
+    const vaultContract = await getVaultContract();
+    const nftContractAddress = process.env.CONTRACT_ADDRESS;
+    
+    if (!nftContractAddress) {
+      return res.status(500).json({ error: "CONTRACT_ADDRESS not configured" });
+    }
+    
+    // Vault에 보관된 NFT 목록 조회
+    const vaultedTokens = await vaultContract.getVaultedTokens(walletAddress, nftContractAddress);
+    
+    const tokenIds = vaultedTokens.map(tokenId => Number(tokenId));
+    
+    return res.json({ 
+      walletAddress: walletAddress,
+      nftContract: nftContractAddress,
+      vaultAddress: process.env.VAULT_ADDRESS || null,
+      vaultedNfts: tokenIds
+    });
+  } catch (err: any) {
+    console.error('[getVaultedNfts] error:', err);
+    return res.status(500).json({ error: err.message || "Get vaulted NFTs query failed" });
   }
 }
 

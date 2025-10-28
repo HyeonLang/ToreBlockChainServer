@@ -631,6 +631,175 @@ curl http://localhost:3000/health
 curl http://localhost:3000/api/nft/address
 ```
 
+## 🔒 NFT Vault 시스템
+
+### 개요
+NFT Vault는 NFT를 안전하게 락업하고 관리하는 시스템입니다.
+
+### 주요 기능
+- **NFT 락업**: NFT를 Vault 컨트랙트로 이동하여 안전하게 보관
+- **NFT 락업 해제**: Vault에서 NFT를 개인 지갑으로 다시 이동
+- **보관 상태 조회**: Vault에 보관된 NFT 목록 확인
+
+### 컨트랙트
+- **NftVault.sol**: NFT 락업/해제 컨트랙트
+- **위치**: `blockchain/contracts/NftVault.sol`
+- **기능**: 
+  - `lockNft()`: NFT를 Vault로 이동
+  - `unlockNft()`: NFT를 개인 주소로 이동
+  - `getVaultedTokens()`: 보관된 NFT 목록 조회
+
+### API 엔드포인트
+
+#### NFT 락업
+```bash
+POST /api/nft/lock
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "walletAddress": "0x...",
+  "tokenId": 123
+}
+```
+
+#### NFT 락업 해제
+```bash
+POST /api/nft/unlock
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "walletAddress": "0x...",
+  "tokenId": 123
+}
+```
+
+#### Vault에 보관된 NFT 조회
+```bash
+GET /api/nft/vault?walletAddress=0x...
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+### 실제 네트워크 배포 가이드
+
+#### 1단계: 환경변수 설정 (.env 파일)
+`.env` 파일이 프로젝트 루트에 있는지 확인하고, 다음 변수들이 설정되어 있는지 확인하세요:
+
+```env
+# ⚠️ 필수 환경변수
+PRIVATE_KEY=YOUR_PRIVATE_KEY_HERE          # 배포자 지갑 개인키 (0x 없이)
+RPC_URL=https://api.avax-test.network/ext/bc/C/rpc  # Fuji 테스트넷 RPC
+CONTRACT_ADDRESS=0x...                       # NFT 컨트랙트 주소 (이미 배포된 경우)
+VAULT_ADDRESS=0x...                          # Vault 컨트랙트 주소 (배포 후 채움)
+PORT=3000
+NODE_ENV=development
+```
+
+#### 2단계: NFT 컨트랙트 배포 (아직 배포하지 않은 경우)
+```bash
+# NFT 컨트랙트를 Fuji 테스트넷에 배포
+npm run deploy:fuji
+
+# 배포된 주소를 .env 파일의 CONTRACT_ADDRESS에 추가하세요
+```
+
+#### 3단계: Vault 컨트랙트 배포
+```bash
+# Vault 컨트랙트를 Fuji 테스트넷에 배포
+npm run deploy:vault:fuji
+
+# 배포 결과에서 나온 주소를 .env 파일의 VAULT_ADDRESS에 추가하세요
+# 예: VAULT_ADDRESS=0x1234567890abcdef1234567890abcdef12345678
+```
+
+#### 4단계: 배포 확인
+배포 후 출력되는 주소를 복사하여 `.env` 파일을 업데이트하세요.
+또한 Avalanche Explorer에서 배포를 확인할 수 있습니다:
+- Fuji 테스트넷: https://testnet.snowtrace.io/
+
+#### 5단계: 백엔드 서버 재시작
+환경변수를 업데이트한 후 서버를 재시작하세요:
+
+```bash
+# 서버 중지 (Ctrl+C)
+# 그리고 다시 시작
+npm run dev
+```
+
+#### ⚠️ 보안 주의사항
+- `.env` 파일은 절대 Git에 커밋하지 마세요 (이미 .gitignore에 포함됨)
+- 테스트넷용 지갑만 사용하고, 실제 자금이 있는 지갑의 개인키는 절대 사용하지 마세요
+- Fuji 테스트넷 Faucet에서 테스트 토큰을 받아서 사용하세요: https://core.app/tools/testnet-faucet/
+
+### 테스트
+```bash
+# Vault 락업/해제 테스트
+npm run test:vault
+```
+
+### ⚠️ 현재 구현의 제한사항
+
+현재 백엔드는 **서버 측 지갑(private key)**을 사용하여 트랜잭션을 전송합니다.
+이 방식은 **보안상 위험**이 있으며, 실제 운영 환경에서는 권장되지 않습니다.
+
+**주의사항:**
+- 기본 배포 스크립트(`deploy:vault`)는 **로컬 가상 네트워크(hardhat)**에 배포합니다
+- 실제 테스트넷/메인넷에서 작동하려면 환경변수 설정 후 `deploy:vault:fuji` 또는 `deploy:vault:avalanche` 명령을 사용해야 합니다
+- 현재 락업 기능은 서버 지갑이 NFT 소유자인 경우에만 작동합니다
+
+### 개선 방안
+
+#### 1. 프론트엔드에서 직접 호출 (권장)
+```javascript
+// 프론트엔드에서 사용자가 직접 MetaMask로 approve & lock
+await nftContract.approve(VAULT_ADDRESS, tokenId);
+await vaultContract.lockNft(NFT_CONTRACT_ADDRESS, tokenId);
+```
+
+#### 2. 서명된 메시지 방식
+- 사용자가 오프체인에서 메시지 서명
+- 백엔드에서 서명 검증
+- 백엔드가 대리 전송 (meta transaction)
+
+#### 3. 서명된 매개변수 (EIP-712)
+```solidity
+function lockNftWithSignature(
+    address nftContract,
+    uint256 tokenId,
+    uint256 nonce,
+    bytes memory signature
+) external {
+    // 서명 검증 및 락업 진행
+}
+```
+
+### 스마트 컨트랙트 구조
+
+**NftVault.sol** (`blockchain/contracts/NftVault.sol`)
+- `lockNft(address nftContract, uint256 tokenId)`: NFT를 Vault에 락업
+- `unlockNft(address nftContract, uint256 tokenId)`: NFT를 Vault에서 꺼냄
+- `getVaultedTokens(address owner, address nftContract)`: 보관된 NFT 목록 조회
+- `isNftVaulted(address owner, address nftContract, uint256 tokenId)`: 락업 여부 확인
+
+**보안 기능**
+- ERC721Receiver 구현: NFT를 안전하게 받을 수 있음
+- 소유자 권한 기반 락업/락업 해제
+- 중복 락업 방지
+
+### 문제 해결
+
+#### "Not approved" 오류
+**원인**: NFT 컨트랙트에 Vault 주소가 approve되지 않음  
+**해결**: 사용자가 직접 approve
+```javascript
+await nftContract.approve(VAULT_ADDRESS, tokenId);
+```
+
+#### "Not token owner" 오류
+**원인**: NFT 소유자가 요청한 주소와 다름  
+**해결**: 올바른 walletAddress로 요청하거나 NFT를 먼저 서버 지갑으로 전송
+
 ## 📝 변경 이력
 
 ### v1.3.0 (현재)

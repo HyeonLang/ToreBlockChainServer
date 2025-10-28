@@ -22,7 +22,10 @@ import {
   getNftController,
   getWalletNftsController,
   getNftTransactionHistoryController,
-  getWalletTransactionHistoryController
+  getWalletTransactionHistoryController,
+  lockNftController,
+  unlockNftController,
+  getVaultedNftsController
 } from "../controllers/nftController";
 
 // Express 라우터 인스턴스 생성
@@ -107,6 +110,43 @@ router.get("/:tokenId/history", getNftTransactionHistoryController);
  * 응답: { walletAddress: string, transactions: Array<{from: string, to: string, tokenId: number, txHash: string, blockNumber: number, timestamp: number, type: string, direction: string}> }
  */
 router.get("/wallet/history", getWalletTransactionHistoryController);
+
+/**
+ * POST /api/nft/lock
+ * NFT를 Vault에 락업하는 엔드포인트
+ * 
+ * 요청 본문: { walletAddress: string, tokenId: number }
+ * - walletAddress: NFT 소유자 주소
+ * - tokenId: 락업할 NFT의 토큰 ID
+ * 
+ * 응답: { txHash: string, vaultAddress: string }
+ * 
+ * 주의: 락업하기 전에 NFT 컨트랙트에 Vault 주소를 approve 해야 합니다.
+ */
+router.post("/lock", lockNftController);
+
+/**
+ * POST /api/nft/unlock
+ * NFT를 Vault에서 꺼내는 엔드포인트 (락업 해제)
+ * 
+ * 요청 본문: { walletAddress: string, tokenId: number }
+ * - walletAddress: NFT 소유자 주소
+ * - tokenId: 락업 해제할 NFT의 토큰 ID
+ * 
+ * 응답: { txHash: string, vaultAddress: string }
+ */
+router.post("/unlock", unlockNftController);
+
+/**
+ * GET /api/nft/vault
+ * 지갑이 Vault에 보관한 NFT 목록을 조회하는 엔드포인트
+ * 
+ * 쿼리 파라미터: walletAddress
+ * - walletAddress: 조회할 지갑 주소
+ * 
+ * 응답: { walletAddress: string, nftContract: string, vaultAddress: string, vaultedNfts: Array<number> }
+ */
+router.get("/vault", getVaultedNftsController);
 
 export default router;
 

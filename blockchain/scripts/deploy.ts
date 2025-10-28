@@ -21,8 +21,7 @@
  * - import { ethers } from "hardhat" 직접 import 사용
  */
 
-import hre from "hardhat";
-const { ethers } = hre as any;
+import { ethers } from "hardhat";
 
 /**
  * 메인 배포 함수
