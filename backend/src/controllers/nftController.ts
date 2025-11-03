@@ -22,7 +22,7 @@
  */
 
 import { Request, Response } from "express";
-import { getContract, getVaultContract } from "../utils/contract";
+import { getContract, getVaultContract, getWallet } from "../utils/contract";
 import { uploadJsonToPinata, testPinataConnection } from "../utils/pinata";
 
 /**
@@ -410,9 +410,10 @@ export async function mintNftController(req: Request, res: Response) {
           console.log('[mint] Metadata uploaded to IPFS:', finalTokenURI);
         } catch (uploadError: any) {
           console.error('[mint] Pinata upload failed:', uploadError);
+          const errorMessage = uploadError?.message || String(uploadError) || 'Unknown error';
           return res.status(500).json({
             error: "Failed to upload metadata to IPFS",
-            details: uploadError.message
+            details: errorMessage
           });
         }
       }
@@ -492,11 +493,54 @@ export async function mintNftController(req: Request, res: Response) {
     // 블록체인 컨트랙트 인스턴스 생성 (백엔드에서 관리하는 컨트랙트 주소 사용)
     const contract = await getContract();
 
+    // 컨트랙트 소유자 확인
+    try {
+      const owner = await contract.owner();
+      const wallet = await getWallet();
+      console.log('[mint] Contract owner:', owner);
+      console.log('[mint] Server wallet:', wallet.address);
+      console.log('[mint] Owner match:', owner.toLowerCase() === wallet.address.toLowerCase());
+      
+      if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
+        return res.status(403).json({
+          error: "Server wallet is not the contract owner",
+          details: {
+            contractOwner: owner,
+            serverWallet: wallet.address,
+            message: "The server wallet must be the contract owner to mint NFTs"
+          }
+        });
+      }
+    } catch (ownerCheckError: any) {
+      console.error('[mint] Owner check failed:', ownerCheckError);
+      // Owner 확인 실패해도 계속 진행 (컨트랙트가 없는 경우일 수 있음)
+    }
+    
     // NFT 민팅 트랜잭션 실행 (mintWithItemId만 사용)
     console.log('[mint] Minting NFT to:', targetAddress, 'with itemId:', itemId, 'URI:', finalTokenURI);
-    const tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
     
-    console.log('[mint] tx sent:', tx.hash);
+    let tx;
+    try {
+      // 가스 추정 먼저 시도
+      const estimatedGas = await contract.mintWithItemId.estimateGas(targetAddress, finalTokenURI, itemId);
+      console.log('[mint] Estimated gas:', estimatedGas.toString());
+      
+      tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
+      console.log('[mint] tx sent:', tx.hash);
+    } catch (txError: any) {
+      console.error('[mint] Transaction error:', txError);
+      const errorMessage = txError?.reason || txError?.message || String(txError);
+      return res.status(500).json({
+        error: "Failed to execute mint transaction",
+        details: errorMessage,
+        possibleCauses: [
+          "Contract not deployed at this address",
+          "Server wallet is not the contract owner",
+          "Insufficient gas or network connection issue",
+          "Contract function does not exist"
+        ]
+      });
+    }
     
     // 트랜잭션 완료 대기 및 영수증 획득
     const receipt = await tx.wait();

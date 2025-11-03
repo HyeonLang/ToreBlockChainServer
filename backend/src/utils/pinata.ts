@@ -66,13 +66,25 @@ export async function uploadJsonToPinata(metadata: any, name?: string): Promise<
     return ipfsUri;
     
   } catch (error: any) {
-    console.error('[pinata] Upload failed:', error.message);
+    console.error('[pinata] Upload failed - Full error:', error);
+    console.error('[pinata] Error type:', typeof error);
+    console.error('[pinata] Error message:', error?.message);
+    console.error('[pinata] Error stack:', error?.stack);
     
-    if (error.message.includes('Invalid authentication')) {
+    let errorMessage = 'Unknown error';
+    if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error) {
+      errorMessage = JSON.stringify(error, Object.getOwnPropertyNames(error));
+    }
+    
+    if (errorMessage && typeof errorMessage === 'string' && errorMessage.includes('Invalid authentication')) {
       throw new Error('Pinata authentication failed. Check your API keys.');
     }
     
-    throw new Error(`Failed to upload to Pinata: ${error.message}`);
+    throw new Error(`Failed to upload to Pinata: ${errorMessage}`);
   }
 }
 
@@ -93,7 +105,8 @@ export async function testPinataConnection(): Promise<boolean> {
     return result.authenticated === true;
     
   } catch (error: any) {
-    console.error('[pinata] Authentication test failed:', error.message);
+    const errorMessage = error?.message || String(error) || 'Unknown error';
+    console.error('[pinata] Authentication test failed:', errorMessage);
     return false;
   }
 }
@@ -115,8 +128,9 @@ export async function listPinnedFiles(options?: any) {
     return result.rows;
     
   } catch (error: any) {
-    console.error('[pinata] List failed:', error.message);
-    throw new Error(`Failed to list pinned files: ${error.message}`);
+    const errorMessage = error?.message || String(error) || 'Unknown error';
+    console.error('[pinata] List failed:', errorMessage);
+    throw new Error(`Failed to list pinned files: ${errorMessage}`);
   }
 }
 
@@ -140,7 +154,8 @@ export async function unpinFile(hash: string): Promise<boolean> {
     return true;
     
   } catch (error: any) {
-    console.error('[pinata] Unpin failed:', error.message);
+    const errorMessage = error?.message || String(error) || 'Unknown error';
+    console.error('[pinata] Unpin failed:', errorMessage);
     return false;
   }
 }

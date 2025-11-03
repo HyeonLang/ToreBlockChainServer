@@ -388,10 +388,32 @@ curl http://localhost:3000/api/exchange/stats
 curl -X POST http://localhost:3000/api/nft/mint \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "0x1234567890abcdef1234567890abcdef12345678",
-    "tokenURI": "ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+    "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
+    "itemId": 3,
+    "userEquipItemId": 1,
+    "itemData": {
+      "name": "철검",
+      "type": "EQUIPMENT",
+      "image": "ipfs://...",
+      "description": "기본적인 철검입니다."
+    }
   }'
 ```
+
+**응답 예시:**
+```json
+{
+  "txHash": "0x...",
+  "tokenId": 123456,
+  "tokenURI": "ipfs://...",
+  "contractAddress": "0x...",
+  "mintedTo": "0x...",
+  "itemId": 3,
+  "userEquipItemId": 1
+}
+```
+
+> 💡 **메타마스크에 NFT 자동 추가**: 민팅 후 프론트엔드에서 `wallet_watchAsset` API를 사용하여 메타마스크에 자동으로 NFT를 추가할 수 있습니다. 자세한 내용은 [메타마스크 NFT 통합 가이드](docs/metamask-nft-integration.md)를 참조하세요.
 
 
 #### NFT 삭제
