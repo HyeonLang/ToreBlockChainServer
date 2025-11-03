@@ -71,6 +71,50 @@ contract NftVault is Ownable, IERC721Receiver {
     }
 
     /**
+     * 여러 NFT를 한 번에 락업하는 배치 함수
+     * 
+     * 실행 흐름:
+     * 1. tokenIds 배열을 순회하며 각 NFT를 락업
+     * 2. setApprovalForAll로 권한을 주었다면 한 번의 트랜잭션으로 처리
+     * 3. 가스비 절약 및 원자성 보장 (전체 성공 또는 전체 실패)
+     * 
+     * @param nftContract - NFT 컨트랙트 주소
+     * @param tokenIds - 락업할 NFT의 토큰 ID 배열
+     */
+    function lockNftBatch(address nftContract, uint256[] calldata tokenIds) external {
+        require(nftContract != address(0), "NftVault: invalid NFT contract");
+        require(tokenIds.length > 0, "NftVault: empty tokenIds array");
+        require(tokenIds.length <= 100, "NftVault: too many tokens (max 100)");
+        
+        IERC721 nft = IERC721(nftContract);
+        
+        // setApprovalForAll 확인 (배치 처리에 필수)
+        require(nft.isApprovedForAll(msg.sender, address(this)), 
+                "NftVault: not approved for all");
+        
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            
+            // 이미 락업되어 있으면 스킵
+            if (_isVaulted[msg.sender][nftContract][tokenId]) {
+                continue;
+            }
+            
+            // 호출자가 NFT 소유자인지 확인
+            require(nft.ownerOf(tokenId) == msg.sender, "NftVault: not token owner");
+            
+            // NFT를 Vault로 전송
+            nft.safeTransferFrom(msg.sender, address(this), tokenId);
+            
+            // 보관 정보 기록
+            _vaultedTokens[msg.sender][nftContract].push(tokenId);
+            _isVaulted[msg.sender][nftContract][tokenId] = true;
+            
+            emit NftLocked(msg.sender, nftContract, tokenId);
+        }
+    }
+
+    /**
      * NFT를 Vault에서 꺼내는 함수 (락업 해제)
      * 
      * 실행 흐름:
@@ -109,6 +153,55 @@ contract NftVault is Ownable, IERC721Receiver {
         }
         
         emit NftUnlocked(msg.sender, nftContract, tokenId);
+    }
+
+    /**
+     * 여러 NFT를 한 번에 락업 해제하는 배치 함수
+     * 
+     * 실행 흐름:
+     * 1. tokenIds 배열을 순회하며 각 NFT를 언락
+     * 2. 한 번의 트랜잭션으로 처리하여 가스비 절약
+     * 3. 원자성 보장 (전체 성공 또는 전체 실패)
+     * 
+     * @param nftContract - NFT 컨트랙트 주소
+     * @param tokenIds - 락업 해제할 NFT의 토큰 ID 배열
+     */
+    function unlockNftBatch(address nftContract, uint256[] calldata tokenIds) external {
+        require(nftContract != address(0), "NftVault: invalid NFT contract");
+        require(tokenIds.length > 0, "NftVault: empty tokenIds array");
+        require(tokenIds.length <= 100, "NftVault: too many tokens (max 100)");
+        
+        IERC721 nft = IERC721(nftContract);
+        
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            
+            // 락업되어 있지 않으면 스킵
+            if (!_isVaulted[msg.sender][nftContract][tokenId]) {
+                continue;
+            }
+            
+            // Vault가 NFT를 소유하고 있는지 확인
+            require(nft.ownerOf(tokenId) == address(this), "NftVault: token not in vault");
+            
+            // NFT를 소유자에게 반환
+            nft.safeTransferFrom(address(this), msg.sender, tokenId);
+            
+            // 보관 정보 제거
+            _isVaulted[msg.sender][nftContract][tokenId] = false;
+            
+            // 배열에서 제거
+            uint256[] storage tokens = _vaultedTokens[msg.sender][nftContract];
+            for (uint256 j = 0; j < tokens.length; j++) {
+                if (tokens[j] == tokenId) {
+                    tokens[j] = tokens[tokens.length - 1];
+                    tokens.pop();
+                    break;
+                }
+            }
+            
+            emit NftUnlocked(msg.sender, nftContract, tokenId);
+        }
     }
 
     /**

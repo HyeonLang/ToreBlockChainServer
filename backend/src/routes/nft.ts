@@ -25,7 +25,8 @@ import {
   getWalletTransactionHistoryController,
   lockNftController,
   unlockNftController,
-  getVaultedNftsController
+  getVaultedNftsController,
+  testPinataController
 } from "../controllers/nftController";
 
 // Express 라우터 인스턴스 생성
@@ -147,6 +148,17 @@ router.post("/unlock", unlockNftController);
  * 응답: { walletAddress: string, nftContract: string, vaultAddress: string, vaultedNfts: Array<number> }
  */
 router.get("/vault", getVaultedNftsController);
+
+/**
+ * GET /api/nft/test-pinata
+ * Pinata IPFS 연결을 테스트하는 엔드포인트
+ * 
+ * 요청: 없음
+ * 응답: { success: boolean, message: string }
+ * 
+ * 참고: PINATA_API_KEY와 PINATA_SECRET_API_KEY가 .env에 설정되어 있어야 합니다.
+ */
+router.get("/test-pinata", testPinataController);
 
 export default router;
 

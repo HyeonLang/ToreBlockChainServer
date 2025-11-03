@@ -23,6 +23,7 @@
 
 import { Request, Response } from "express";
 import { getContract, getVaultContract } from "../utils/contract";
+import { uploadJsonToPinata, testPinataConnection } from "../utils/pinata";
 
 /**
  * 구조화된 메타데이터 형식을 검증하는 함수
@@ -38,43 +39,29 @@ function validateStructuredMetadata(itemData: any): {isValid: boolean, errors: s
     errors.push("name is required and must be a string");
   }
   
-  if (!itemData.description || typeof itemData.description !== 'string') {
-    errors.push("description is required and must be a string");
+  // type은 필수
+  if (!itemData.type || typeof itemData.type !== 'string') {
+    errors.push("type is required and must be a string");
   }
   
+  // baseStats는 필수 (객체)
+  if (!itemData.baseStats || typeof itemData.baseStats !== 'object' || Array.isArray(itemData.baseStats)) {
+    errors.push("baseStats is required and must be an object");
+  }
+  
+  // image는 필수 (ipfs:// 또는 https:// 형식)
   if (!itemData.image || typeof itemData.image !== 'string') {
     errors.push("image is required and must be a string");
-  }
-  
-  if (!itemData.external_url || typeof itemData.external_url !== 'string') {
-    errors.push("external_url is required and must be a string");
-  }
-  
-  // attributes 검증
-  if (!Array.isArray(itemData.attributes)) {
-    errors.push("attributes must be an array");
   } else {
-    itemData.attributes.forEach((attr: any, index: number) => {
-      if (!attr.trait_type || typeof attr.trait_type !== 'string') {
-        errors.push(`attributes[${index}].trait_type is required and must be a string`);
-      }
-      if (attr.value === undefined || attr.value === null) {
-        errors.push(`attributes[${index}].value is required`);
-      }
-    });
+    // image 형식 검증 (ipfs:// 또는 https://로 시작)
+    if (!itemData.image.startsWith('ipfs://') && !itemData.image.startsWith('https://')) {
+      errors.push("image must start with 'ipfs://' or 'https://'");
+    }
   }
   
-  // game_data 검증
-  if (!itemData.game_data || typeof itemData.game_data !== 'object') {
-    errors.push("game_data is required and must be an object");
-  } else {
-    if (!itemData.game_data.id || typeof itemData.game_data.id !== 'string') {
-      errors.push("game_data.id is required and must be a string");
-    }
-    if (!itemData.game_data.item_id || typeof itemData.game_data.item_id !== 'string') {
-      errors.push("game_data.item_id is required and must be a string");
-    }
-    // nft_id는 민팅 전이므로 null이거나 없을 수 있음
+  // 권장 필드 검증 (없어도 에러는 아님, 하지만 있으면 형식 확인)
+  if (itemData.description !== undefined && typeof itemData.description !== 'string') {
+    errors.push("description must be a string if provided");
   }
   
   return {
@@ -83,25 +70,6 @@ function validateStructuredMetadata(itemData: any): {isValid: boolean, errors: s
   };
 }
 
-/**
- * 메타데이터에 nft_id를 업데이트하는 함수
- * 
- * @param metadata - 업데이트할 메타데이터 객체
- * @param nftId - 설정할 NFT ID
- * @returns 업데이트된 메타데이터
- */
-function updateMetadataWithNftId(metadata: any, nftId: number): any {
-  const updatedMetadata = { ...metadata };
-  
-  if (updatedMetadata.game_data) {
-    updatedMetadata.game_data = {
-      ...updatedMetadata.game_data,
-      nft_id: nftId
-    };
-  }
-  
-  return updatedMetadata;
-}
 
 /**
  * 컨트랙트 주소 조회 컨트롤러
@@ -340,12 +308,14 @@ export async function mintNftController(req: Request, res: Response) {
       walletAddress, 
       itemId, 
       userEquipItemId, 
-      itemData
+      itemData,
+      metadataUrl
     } = req.body as { 
       walletAddress?: string;
       itemId?: number;
       userEquipItemId?: number;
       itemData?: any;
+      metadataUrl?: string;
     };
     
     // 주소 결정
@@ -357,6 +327,7 @@ export async function mintNftController(req: Request, res: Response) {
     
     if (itemData) {
       if (typeof itemData === 'string') {
+        // 이미 IPFS URI나 URL 형태면 그대로 사용
         finalTokenURI = itemData;
       } else {
         // 구조화된 메타데이터 형식 검증
@@ -370,7 +341,80 @@ export async function mintNftController(req: Request, res: Response) {
         
         // 검증된 메타데이터를 저장 (나중에 nft_id 업데이트용)
         structuredMetadata = itemData;
-        finalTokenURI = JSON.stringify(itemData);
+        
+        // 표준 NFT 메타데이터 형식으로 구성
+        // OpenSea 및 기타 마켓플레이스 표준 준수
+        const nftMetadata: any = {
+          // 필수 필드
+          name: itemData.name,
+          image: itemData.image,
+          // 권장 필드
+          description: itemData.description || '',
+          external_url: metadataUrl || itemData.external_url || '',
+          attributes: []
+        };
+        
+        // attributes 구성
+        // 1. itemDefId (구 itemId)
+        if (itemId !== undefined && itemId !== null) {
+          nftMetadata.attributes.push({
+            trait_type: "Item Def ID",
+            value: itemId,
+            display_type: "number"
+          });
+        }
+        
+        // 2. equipItemId (구 userEquipItemId)
+        if (userEquipItemId !== undefined && userEquipItemId !== null) {
+          nftMetadata.attributes.push({
+            trait_type: "Equip Item ID",
+            value: userEquipItemId,
+            display_type: "number"
+          });
+        }
+        
+        // 3. type
+        if (itemData.type) {
+          nftMetadata.attributes.push({
+            trait_type: "Type",
+            value: itemData.type
+          });
+        }
+        
+        // 4. baseStats의 각 속성
+        if (itemData.baseStats && typeof itemData.baseStats === 'object') {
+          Object.entries(itemData.baseStats).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              nftMetadata.attributes.push({
+                trait_type: key.charAt(0).toUpperCase() + key.slice(1),  // 첫 글자 대문자
+                value: value,
+                display_type: typeof value === 'number' ? "number" : undefined
+              });
+            }
+          });
+        }
+        
+        // animation_url이 있으면 추가
+        if (itemData.animation_url) {
+          nftMetadata.animation_url = itemData.animation_url;
+        }
+        
+        // Pinata에 JSON 업로드하고 IPFS URI 받기
+        try {
+          console.log('[mint] Uploading metadata to Pinata...');
+          
+          // 메타데이터 이름: itemId-userEquipItemId (간결하고 의미있음)
+          const metadataName = `${itemId}-${userEquipItemId}`;
+          
+          finalTokenURI = await uploadJsonToPinata(nftMetadata, metadataName);
+          console.log('[mint] Metadata uploaded to IPFS:', finalTokenURI);
+        } catch (uploadError: any) {
+          console.error('[mint] Pinata upload failed:', uploadError);
+          return res.status(500).json({
+            error: "Failed to upload metadata to IPFS",
+            details: uploadError.message
+          });
+        }
       }
     } else {
       return res.status(400).json({
@@ -475,17 +519,11 @@ export async function mintNftController(req: Request, res: Response) {
       }
     }
     
-    // 구조화된 메타데이터가 있는 경우 nft_id 업데이트
-    let updatedMetadata = null;
-    if (structuredMetadata && tokenId !== null) {
-      updatedMetadata = updateMetadataWithNftId(structuredMetadata, tokenId);
-      console.log('[mint] Updated metadata with nft_id:', updatedMetadata);
-    }
-    
     // 트랜잭션 해시, tokenId, 컨트랙트 주소 반환 (Java 요청 정보 포함)
     const payload = { 
       txHash: receipt?.hash ?? tx.hash,
       tokenId: tokenId,
+      tokenURI: finalTokenURI, // IPFS URI 포함
       contractAddress: process.env.CONTRACT_ADDRESS || null,
       // 요청 정보 추가 (디버깅 및 추적용)
       ...(walletAddress && {
@@ -493,10 +531,6 @@ export async function mintNftController(req: Request, res: Response) {
         itemId: itemId,
         userEquipItemId: userEquipItemId,
         itemDataIncluded: !!itemData
-      }),
-      // 업데이트된 메타데이터 정보 (구조화된 메타데이터가 있는 경우)
-      ...(updatedMetadata && {
-        updatedMetadata: updatedMetadata
       })
     };
     console.log('[mint] response:', payload);
@@ -1022,7 +1056,7 @@ export async function getVaultedNftsController(req: Request, res: Response) {
     // Vault에 보관된 NFT 목록 조회
     const vaultedTokens = await vaultContract.getVaultedTokens(walletAddress, nftContractAddress);
     
-    const tokenIds = vaultedTokens.map(tokenId => Number(tokenId));
+    const tokenIds = vaultedTokens.map((tokenId: bigint) => Number(tokenId));
     
     return res.json({ 
       walletAddress: walletAddress,
@@ -1036,4 +1070,49 @@ export async function getVaultedNftsController(req: Request, res: Response) {
   }
 }
 
+/**
+ * Pinata 연결 테스트 컨트롤러
+ * 
+ * 실행 흐름:
+ * 1. Pinata API 키 확인
+ * 2. Pinata 인증 테스트
+ * 3. 연결 상태 반환
+ * 
+ * @param _req - Express Request 객체 (사용하지 않음)
+ * @param res - Express Response 객체
+ * @returns { success: boolean, message: string } - 연결 상태
+ */
+export async function testPinataController(_req: Request, res: Response) {
+  try {
+    const hasApiKeys = !!(process.env.PINATA_API_KEY && process.env.PINATA_SECRET_API_KEY);
+    
+    if (!hasApiKeys) {
+      return res.status(400).json({
+        success: false,
+        message: "Pinata API keys not configured",
+        hint: "Please set PINATA_API_KEY and PINATA_SECRET_API_KEY in .env file"
+      });
+    }
+    
+    const isConnected = await testPinataConnection();
+    
+    if (isConnected) {
+      return res.json({
+        success: true,
+        message: "Pinata connection successful"
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Pinata authentication failed"
+      });
+    }
+  } catch (err: any) {
+    console.error('[testPinata] error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || "Pinata test failed"
+    });
+  }
+}
 

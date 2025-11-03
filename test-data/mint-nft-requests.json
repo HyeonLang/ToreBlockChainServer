@@ -1,0 +1,91 @@
+[
+  {
+    "description": "메인 캐릭터의 철검 (level 1) 민팅",
+    "request": {
+      "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
+      "itemId": 3,
+      "userEquipItemId": 1,
+      "metadataUrl": "https://toregame.com/items/3",
+      "itemData": {
+        "name": "철검",
+        "type": "EQUIPMENT",
+        "baseStats": {
+          "attack": 15,
+          "durability": 100,
+          "star": 1,
+          "enhancement": 0,
+          "enhancedAttack": 10
+        },
+        "description": "기본적인 철검입니다.",
+        "image": "ipfs://bafkreicqxmszqt2tcmf5aqqblokcs2uhem2e4mzbt7pvkjeiitjk5s3atu"
+      }
+    }
+  },
+  {
+    "description": "메인 캐릭터의 가죽 갑옷 (level 1) 민팅",
+    "request": {
+      "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
+      "itemId": 4,
+      "userEquipItemId": 2,
+      "metadataUrl": "https://toregame.com/items/4",
+      "itemData": {
+        "name": "가죽 갑옷",
+        "type": "EQUIPMENT",
+        "baseStats": {
+          "health": 10,
+          "durability": 80,
+          "star": 1,
+          "enhancement": 0,
+          "enhancedHealth": 10
+        },
+        "description": "가죽으로 만든 갑옷입니다.",
+        "image": "ipfs://bafkreidjnwybxkem2ghdhbwn23wopyldw376qfmd626quqb5zblyjummse"
+      }
+    }
+  },
+  {
+    "description": "메인 캐릭터의 철검 (level 2, 강화된 공격력) 민팅",
+    "request": {
+      "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
+      "itemId": 3,
+      "userEquipItemId": 3,
+      "metadataUrl": "https://toregame.com/items/3",
+      "itemData": {
+        "name": "철검",
+        "type": "EQUIPMENT",
+        "baseStats": {
+          "attack": 15,
+          "durability": 100,
+          "star": 2,
+          "enhancement": 0,
+          "enhancedAttack": 13
+        },
+        "description": "기본적인 철검입니다.",
+        "image": "ipfs://bafkreicqxmszqt2tcmf5aqqblokcs2uhem2e4mzbt7pvkjeiitjk5s3atu"
+      }
+    }
+  },
+  {
+    "description": "메인 캐릭터의 가죽 갑옷 (level 2, 강화된 체력) 민팅",
+    "request": {
+      "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
+      "itemId": 4,
+      "userEquipItemId": 4,
+      "metadataUrl": "https://toregame.com/items/4",
+      "itemData": {
+        "name": "가죽 갑옷",
+        "type": "EQUIPMENT",
+        "baseStats": {
+          "health": 10,
+          "durability": 80,
+          "star": 2,
+          "enhancement": 0,
+          "enhancedHealth": 9
+        },
+        "description": "가죽으로 만든 갑옷입니다.",
+        "image": "ipfs://bafkreidjnwybxkem2ghdhbwn23wopyldw376qfmd626quqb5zblyjummse"
+      }
+    }
+  }
+]
+
