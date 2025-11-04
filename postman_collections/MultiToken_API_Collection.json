@@ -1,28 +1,4 @@
-/**
- * MultiToken API Collection - Postman 컬렉션
- * 
- * 기능:
- * - 다중 토큰 팩토리를 통한 여러 종류의 토큰 관리 API 테스트
- * - MultiTokenFactory 컨트랙트 연동
- * - 토큰 생성, 조회, 민팅, 소각 기능
- * - 각 토큰별 독립적인 잔액 및 전송 관리
- * 
- * 지원 엔드포인트:
- * - POST /api/multi-token/create - 새 토큰 생성
- * - GET /api/multi-token/list - 모든 토큰 목록 조회
- * - GET /api/multi-token/active - 활성 토큰 목록 조회
- * - GET /api/multi-token/info/:symbol - 특정 토큰 정보 조회
- * - GET /api/multi-token/balance/:symbol/:address - 특정 토큰 잔액 조회
- * - POST /api/multi-token/mint - 특정 토큰 민팅
- * - POST /api/multi-token/burn - 특정 토큰 소각
- * - GET /api/multi-token/connection - 팩토리 연결 상태 확인
- * 
- * 사용법:
- * 1. Postman에서 이 컬렉션을 import
- * 2. baseUrl 변수를 서버 주소로 설정
- * 3. 각 요청의 파라미터를 수정하여 테스트
- * 4. 응답 결과를 확인하여 API 동작 검증
- */
+
 {
   "info": {
     "name": "MultiToken API Collection",

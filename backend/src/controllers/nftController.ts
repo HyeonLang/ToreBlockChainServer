@@ -306,14 +306,14 @@ export async function mintNftController(req: Request, res: Response) {
     // Java ContractNftRequest 구조에 맞게 파라미터 추출
     const { 
       walletAddress, 
-      itemId, 
-      userEquipItemId, 
+      itemDefId, 
+      equipItemId, 
       itemData,
       metadataUrl
     } = req.body as { 
       walletAddress?: string;
-      itemId?: number;
-      userEquipItemId?: number;
+      itemDefId?: number;
+      equipItemId?: number;
       itemData?: any;
       metadataUrl?: string;
     };
@@ -355,20 +355,20 @@ export async function mintNftController(req: Request, res: Response) {
         };
         
         // attributes 구성
-        // 1. itemDefId (구 itemId)
-        if (itemId !== undefined && itemId !== null) {
+        // 1. itemDefId
+        if (itemDefId !== undefined && itemDefId !== null) {
           nftMetadata.attributes.push({
             trait_type: "Item Def ID",
-            value: itemId,
+            value: itemDefId,
             display_type: "number"
           });
         }
         
-        // 2. equipItemId (구 userEquipItemId)
-        if (userEquipItemId !== undefined && userEquipItemId !== null) {
+        // 2. equipItemId
+        if (equipItemId !== undefined && equipItemId !== null) {
           nftMetadata.attributes.push({
             trait_type: "Equip Item ID",
-            value: userEquipItemId,
+            value: equipItemId,
             display_type: "number"
           });
         }
@@ -403,8 +403,8 @@ export async function mintNftController(req: Request, res: Response) {
         try {
           console.log('[mint] Uploading metadata to Pinata...');
           
-          // 메타데이터 이름: itemId-userEquipItemId (간결하고 의미있음)
-          const metadataName = `${itemId}-${userEquipItemId}`;
+          // 메타데이터 이름: itemDefId-equipItemId (간결하고 의미있음)
+          const metadataName = `${itemDefId}-${equipItemId}`;
           
           finalTokenURI = await uploadJsonToPinata(nftMetadata, metadataName);
           console.log('[mint] Metadata uploaded to IPFS:', finalTokenURI);
@@ -431,8 +431,8 @@ export async function mintNftController(req: Request, res: Response) {
       typeof_targetAddress: typeof targetAddress,
       targetAddress_length: targetAddress?.length,
       regex_test: targetAddress ? /^0x[a-fA-F0-9]{40}$/.test(targetAddress) : false,
-      itemId: itemId,
-      userEquipItemId: userEquipItemId,
+      itemDefId: itemDefId,
+      equipItemId: equipItemId,
       itemData: itemData,
       finalTokenURI: finalTokenURI
     });
@@ -464,25 +464,25 @@ export async function mintNftController(req: Request, res: Response) {
       });
     }
     
-    // itemId 필수 검증
-    if (!itemId || typeof itemId !== "number" || itemId <= 0) {
+    // itemDefId 필수 검증
+    if (!itemDefId || typeof itemDefId !== "number" || itemDefId <= 0) {
       return res.status(400).json({ 
-        error: "Invalid itemId",
+        error: "Invalid itemDefId",
         details: {
-          received: itemId,
-          type: typeof itemId,
+          received: itemDefId,
+          type: typeof itemDefId,
           expected: "Positive integer"
         }
       });
     }
     
-    if (walletAddress && userEquipItemId !== undefined) {
-      if (typeof userEquipItemId !== "number" || userEquipItemId <= 0) {
+    if (walletAddress && equipItemId !== undefined) {
+      if (typeof equipItemId !== "number" || equipItemId <= 0) {
         return res.status(400).json({ 
-          error: "Invalid userEquipItemId",
+          error: "Invalid equipItemId",
           details: {
-            received: userEquipItemId,
-            type: typeof userEquipItemId,
+            received: equipItemId,
+            type: typeof equipItemId,
             expected: "Positive integer"
           }
         });
@@ -517,15 +517,15 @@ export async function mintNftController(req: Request, res: Response) {
     }
     
     // NFT 민팅 트랜잭션 실행 (mintWithItemId만 사용)
-    console.log('[mint] Minting NFT to:', targetAddress, 'with itemId:', itemId, 'URI:', finalTokenURI);
+    console.log('[mint] Minting NFT to:', targetAddress, 'with itemDefId:', itemDefId, 'URI:', finalTokenURI);
     
     let tx;
     try {
       // 가스 추정 먼저 시도
-      const estimatedGas = await contract.mintWithItemId.estimateGas(targetAddress, finalTokenURI, itemId);
+      const estimatedGas = await contract.mintWithItemId.estimateGas(targetAddress, finalTokenURI, itemDefId);
       console.log('[mint] Estimated gas:', estimatedGas.toString());
       
-      tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemId);
+      tx = await contract.mintWithItemId(targetAddress, finalTokenURI, itemDefId);
       console.log('[mint] tx sent:', tx.hash);
     } catch (txError: any) {
       console.error('[mint] Transaction error:', txError);
@@ -572,8 +572,8 @@ export async function mintNftController(req: Request, res: Response) {
       // 요청 정보 추가 (디버깅 및 추적용)
       ...(walletAddress && {
         mintedTo: targetAddress,
-        itemId: itemId,
-        userEquipItemId: userEquipItemId,
+        itemDefId: itemDefId,
+        equipItemId: equipItemId,
         itemDataIncluded: !!itemData
       })
     };

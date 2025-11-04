@@ -3,8 +3,8 @@
     "description": "메인 캐릭터의 철검 (level 1) 민팅",
     "request": {
       "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
-      "itemId": 3,
-      "userEquipItemId": 1,
+      "itemDefId": 3,
+      "equipItemId": 1,
       "metadataUrl": "https://toregame.com/items/3",
       "itemData": {
         "name": "철검",
@@ -25,8 +25,8 @@
     "description": "메인 캐릭터의 가죽 갑옷 (level 1) 민팅",
     "request": {
       "walletAddress": "0xFF5530beBE63f97f6cC80193416f890d76d65661",
-      "itemId": 4,
-      "userEquipItemId": 2,
+      "itemDefId": 4,
+      "equipItemId": 2,
       "metadataUrl": "https://toregame.com/items/4",
       "itemData": {
         "name": "가죽 갑옷",
