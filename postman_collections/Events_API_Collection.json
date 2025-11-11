@@ -1,0 +1,172 @@
+{
+  "info": {
+    "name": "Events API Collection",
+    "description": "블록체인 이벤트를 ToreMainServer에 전달하는 엔드포인트 문서",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{MAIN_SERVER_API_URL}}/api/events",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Nft Locked",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owner\": \"0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC\",\n  \"nftContract\": \"0xAb8496A1A5CB0f2B6a15C6E12f2FcA3A5C2F8f6b\",\n  \"tokenId\": \"1\",\n  \"blockNumber\": 3456789,\n  \"transactionHash\": \"0x1a2b3c4d5e6f708090a0b0c0d0e0f1011121314151617181920212223242526\",\n  \"logIndex\": 0,\n  \"removed\": false,\n  \"contract\": \"NftVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/nft-locked",
+          "host": ["{{baseUrl}}"],
+          "path": ["nft-locked"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Nft Unlocked",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owner\": \"0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC\",\n  \"nftContract\": \"0xAb8496A1A5CB0f2B6a15C6E12f2FcA3A5C2F8f6b\",\n  \"tokenId\": \"1\",\n  \"blockNumber\": 3456795,\n  \"transactionHash\": \"0x2b3c4d5e6f708090a0b0c0d0e0f10111213141516171819202122232425262a\",\n  \"logIndex\": 1,\n  \"removed\": false,\n  \"contract\": \"NftVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/nft-unlocked",
+          "host": ["{{baseUrl}}"],
+          "path": ["nft-unlocked"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Nft Listed",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"listingId\": \"42\",\n  \"tokenId\": \"9876\",\n  \"seller\": \"0x90F79bf6EB2c4f870365E785982E1f101E93b906\",\n  \"price\": \"2500000000000000000\",\n  \"expiresAt\": \"1728542895\",\n  \"blockNumber\": 5123456,\n  \"transactionHash\": \"0x3c4d5e6f708090a0b0c0d0e0f10111213141516171819202122232425262a2b\",\n  \"logIndex\": 0,\n  \"removed\": false,\n  \"contract\": \"MarketplaceVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/nft-listed",
+          "host": ["{{baseUrl}}"],
+          "path": ["nft-listed"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Nft Sold",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"listingId\": \"42\",\n  \"tokenId\": \"9876\",\n  \"buyer\": \"0xffcf8fdee72ac11b5c542428b35eef5769c409f0\",\n  \"price\": \"2500000000000000000\",\n  \"feeAmount\": \"50000000000000000\",\n  \"finalStatus\": 3,\n  \"blockNumber\": 5123468,\n  \"transactionHash\": \"0x4d5e6f708090a0b0c0d0e0f10111213141516171819202122232425262a2b3c\",\n  \"logIndex\": 2,\n  \"removed\": false,\n  \"contract\": \"MarketplaceVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/nft-sold",
+          "host": ["{{baseUrl}}"],
+          "path": ["nft-sold"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Nft Reclaimed",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"listingId\": \"43\",\n  \"tokenId\": \"6543\",\n  \"seller\": \"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65\",\n  \"finalStatus\": 1,\n  \"blockNumber\": 5123475,\n  \"transactionHash\": \"0x5e6f708090a0b0c0d0e0f10111213141516171819202122232425262a2b3c4d\",\n  \"logIndex\": 1,\n  \"removed\": false,\n  \"contract\": \"MarketplaceVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/nft-reclaimed",
+          "host": ["{{baseUrl}}"],
+          "path": ["nft-reclaimed"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fee Updated",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"newFeePercent\": \"750\",\n  \"blockNumber\": 5123480,\n  \"transactionHash\": \"0x6f708090a0b0c0d0e0f10111213141516171819202122232425262a2b3c4d5e\",\n  \"logIndex\": 0,\n  \"removed\": false,\n  \"contract\": \"MarketplaceVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/fee-updated",
+          "host": ["{{baseUrl}}"],
+          "path": ["fee-updated"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Collector Updated",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"newCollector\": \"0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199\",\n  \"blockNumber\": 5123485,\n  \"transactionHash\": \"0x708090a0b0c0d0e0f10111213141516171819202122232425262a2b3c4d5e6f\",\n  \"logIndex\": 3,\n  \"removed\": false,\n  \"contract\": \"MarketplaceVault\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collector-updated",
+          "host": ["{{baseUrl}}"],
+          "path": ["collector-updated"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
+

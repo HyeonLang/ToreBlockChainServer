@@ -992,7 +992,7 @@ export async function lockNftController(req: Request, res: Response) {
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
-      vaultAddress: process.env.VAULT_ADDRESS || null,
+      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
       message: "NFT locked successfully. The NFT is now in the vault."
     });
   } catch (err: any) {
@@ -1056,7 +1056,7 @@ export async function unlockNftController(req: Request, res: Response) {
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
-      vaultAddress: process.env.VAULT_ADDRESS || null,
+      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
       message: "NFT unlocked successfully. The NFT is now back to the server wallet and will be returned to you."
     });
   } catch (err: any) {
@@ -1105,7 +1105,7 @@ export async function getVaultedNftsController(req: Request, res: Response) {
     return res.json({ 
       walletAddress: walletAddress,
       nftContract: nftContractAddress,
-      vaultAddress: process.env.VAULT_ADDRESS || null,
+      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
       vaultedNfts: tokenIds
     });
   } catch (err: any) {

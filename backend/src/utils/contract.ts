@@ -90,18 +90,18 @@ export async function getContract() {
  * 3. 컨트랙트 주소, ABI, 지갑으로 Vault 컨트랙트 인스턴스 생성
  * 
  * @returns Promise<ethers.Contract> - NftVault 컨트랙트 인스턴스
- * @throws Error - VAULT_ADDRESS 환경변수가 없을 때
+ * @throws Error - NFT_VAULT_ADDRESS 환경변수가 없을 때
  */
 export async function getVaultContract() {
   console.log('[getVaultContract] 환경변수 디버깅:', {
-    VAULT_ADDRESS: process.env.VAULT_ADDRESS,
+    NFT_VAULT_ADDRESS: process.env.NFT_VAULT_ADDRESS,
     NODE_ENV: process.env.NODE_ENV
   });
   
-  const address = process.env.VAULT_ADDRESS;
+  const address = process.env.NFT_VAULT_ADDRESS;
   if (!address) {
-    console.error('[getVaultContract] VAULT_ADDRESS가 설정되지 않았습니다.');
-    throw new Error("VAULT_ADDRESS is required");
+    console.error('[getVaultContract] NFT_VAULT_ADDRESS가 설정되지 않았습니다.');
+    throw new Error("NFT_VAULT_ADDRESS is required");
   }
   
   // 지갑 인스턴스 생성 (개인키로 서명 가능)
