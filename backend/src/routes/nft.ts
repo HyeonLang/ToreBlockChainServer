@@ -113,7 +113,7 @@ router.get("/:tokenId/history", getNftTransactionHistoryController);
 router.get("/wallet/history", getWalletTransactionHistoryController);
 
 /**
- * POST /api/nft/lock
+ * POST /api/nft/lockup
  * NFT를 Vault에 락업하는 엔드포인트
  * 
  * 요청 본문: { walletAddress: string, tokenId: number }
@@ -124,10 +124,10 @@ router.get("/wallet/history", getWalletTransactionHistoryController);
  * 
  * 주의: 락업하기 전에 NFT 컨트랙트에 Vault 주소를 approve 해야 합니다.
  */
-router.post("/lock", lockNftController);
+router.post("/lockup", lockNftController);
 
 /**
- * POST /api/nft/unlock
+ * POST /api/nft/unlockup
  * NFT를 Vault에서 꺼내는 엔드포인트 (락업 해제)
  * 
  * 요청 본문: { walletAddress: string, tokenId: number }
@@ -136,7 +136,7 @@ router.post("/lock", lockNftController);
  * 
  * 응답: { txHash: string, vaultAddress: string }
  */
-router.post("/unlock", unlockNftController);
+router.post("/unlockup", unlockNftController);
 
 /**
  * GET /api/nft/vault

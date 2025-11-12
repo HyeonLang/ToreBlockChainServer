@@ -16,8 +16,8 @@ import fs from "fs";
 import nftRouter from "./routes/nft";
 import multiTokenRouter from "./routes/multiToken";
 import { errorHandler } from "./middleware/errorHandler";
-import { initializeEventListeners } from "./services/blockchainListener.service";
-import { startBlockchainWorker } from "./services/blockchainWorker.service";
+import { initializeEventListeners } from "./services/blockchain/index.service";
+import { startBlockchainWorker } from "./services/blockchain/worker.service";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
 // 현재 작업 디렉토리가 backend/src이므로 프로젝트 루트로 상대 경로 설정
