@@ -936,30 +936,48 @@ export async function getWalletTransactionHistoryController(req: Request, res: R
  * @throws 500 - 블록체인 상호작용 실패 시
  */
 export async function lockNftController(req: Request, res: Response) {
+  const startTime = Date.now();
+  console.log("[LockNft] ===== 락업 요청 시작 =====");
+  console.log("[LockNft] 요청 본문:", JSON.stringify(req.body, null, 2));
+  
   try {
     const { walletAddress, tokenId } = req.body as { 
       walletAddress: string; 
       tokenId: string | number 
     };
     
+    console.log("[LockNft] 파라미터 추출:", { walletAddress, tokenId });
+    
     // 필수 파라미터 검증
     if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      console.error("[LockNft] ❌ 잘못된 지갑 주소:", walletAddress);
       return res.status(400).json({ error: "Invalid wallet address" });
     }
     
     if (tokenId === undefined || tokenId === null) {
+      console.error("[LockNft] ❌ tokenId 누락");
       return res.status(400).json({ error: "Missing tokenId" });
     }
     const numericTokenId = typeof tokenId === "string" ? Number(tokenId) : tokenId;
     if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      console.error("[LockNft] ❌ 잘못된 tokenId:", tokenId, "→", numericTokenId);
       return res.status(400).json({ error: "Invalid tokenId" });
     }
+
+    console.log("[LockNft] ✅ 파라미터 검증 완료:", { walletAddress, numericTokenId });
 
     const nftContract = await getContract();
     const vaultContract = await getVaultContract();
     const nftContractAddress = process.env.CONTRACT_ADDRESS;
+    const vaultAddress = process.env.NFT_VAULT_ADDRESS;
+    
+    console.log("[LockNft] 컨트랙트 주소 확인:", {
+      nftContract: nftContractAddress,
+      vaultAddress: vaultAddress
+    });
     
     if (!nftContractAddress) {
+      console.error("[LockNft] ❌ CONTRACT_ADDRESS 미설정");
       return res.status(500).json({ error: "CONTRACT_ADDRESS not configured" });
     }
     
@@ -968,12 +986,20 @@ export async function lockNftController(req: Request, res: Response) {
     // 1. 사용자가 프론트엔드에서 직접 approve하고 락업 호출
     // 2. 서명된 메시지 방식 사용
     
+    console.log("[LockNft] NFT 소유자 확인 중...");
     // NFT 소유자 확인
     const owner = await nftContract.ownerOf(BigInt(numericTokenId));
     const isServerOwner = owner.toLowerCase() === walletAddress.toLowerCase();
     
+    console.log("[LockNft] 소유자 정보:", {
+      requestedOwner: walletAddress,
+      actualOwner: owner,
+      isServerOwner: isServerOwner
+    });
+    
     // 백엔드 지갑이 소유자인 경우에만 락업 진행
     if (!isServerOwner) {
+      console.error("[LockNft] ❌ 소유자 불일치 - 서버 지갑이 NFT를 소유하지 않음");
       return res.status(400).json({ 
         error: "Server wallet must own the NFT to lock it",
         details: {
@@ -984,11 +1010,38 @@ export async function lockNftController(req: Request, res: Response) {
       });
     }
     
+    console.log("[LockNft] ✅ 소유자 확인 완료 - 락업 트랜잭션 전송 중...");
+    console.log("[LockNft] 트랜잭션 파라미터:", {
+      nftContract: nftContractAddress,
+      tokenId: numericTokenId,
+      vaultAddress: vaultAddress
+    });
+    
     // NFT 락업 트랜잭션 실행 (서버가 소유자이므로 서버가 호출)
     const tx = await vaultContract.lockNft(nftContractAddress, BigInt(numericTokenId));
     
+    console.log("[LockNft] 트랜잭션 전송 완료:", {
+      txHash: tx.hash,
+      from: tx.from,
+      to: tx.to,
+      value: tx.value?.toString(),
+      gasLimit: tx.gasLimit?.toString(),
+      gasPrice: tx.gasPrice?.toString()
+    });
+    
+    console.log("[LockNft] 트랜잭션 영수증 대기 중...");
     // 트랜잭션 완료 대기 및 영수증 획득
     const receipt = await tx.wait();
+    
+    const elapsedTime = Date.now() - startTime;
+    console.log("[LockNft] ✅ 락업 완료:", {
+      txHash: receipt?.hash ?? tx.hash,
+      blockNumber: receipt?.blockNumber,
+      gasUsed: receipt?.gasUsed?.toString(),
+      status: receipt?.status,
+      elapsedTime: `${elapsedTime}ms`
+    });
+    console.log("[LockNft] ===== 락업 요청 종료 =====");
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
@@ -996,7 +1049,16 @@ export async function lockNftController(req: Request, res: Response) {
       message: "NFT locked successfully. The NFT is now in the vault."
     });
   } catch (err: any) {
-    console.error('[lockNft] error:', err);
+    const elapsedTime = Date.now() - startTime;
+    console.error("[LockNft] ❌ 에러 발생:", {
+      error: err.message,
+      stack: err.stack,
+      code: err.code,
+      reason: err.reason,
+      data: err.data,
+      elapsedTime: `${elapsedTime}ms`
+    });
+    console.error("[LockNft] ===== 락업 요청 실패 =====");
     return res.status(500).json({ error: err.message || "Lock NFT failed" });
   }
 }
@@ -1018,29 +1080,47 @@ export async function lockNftController(req: Request, res: Response) {
  * @throws 500 - 블록체인 상호작용 실패 시
  */
 export async function unlockNftController(req: Request, res: Response) {
+  const startTime = Date.now();
+  console.log("[UnlockNft] ===== 락업 해제 요청 시작 =====");
+  console.log("[UnlockNft] 요청 본문:", JSON.stringify(req.body, null, 2));
+  
   try {
     const { walletAddress, tokenId } = req.body as { 
       walletAddress: string; 
       tokenId: string | number 
     };
     
+    console.log("[UnlockNft] 파라미터 추출:", { walletAddress, tokenId });
+    
     // 필수 파라미터 검증
     if (!walletAddress || typeof walletAddress !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      console.error("[UnlockNft] ❌ 잘못된 지갑 주소:", walletAddress);
       return res.status(400).json({ error: "Invalid wallet address" });
     }
     
     if (tokenId === undefined || tokenId === null) {
+      console.error("[UnlockNft] ❌ tokenId 누락");
       return res.status(400).json({ error: "Missing tokenId" });
     }
     const numericTokenId = typeof tokenId === "string" ? Number(tokenId) : tokenId;
     if (!Number.isInteger(numericTokenId) || numericTokenId < 0) {
+      console.error("[UnlockNft] ❌ 잘못된 tokenId:", tokenId, "→", numericTokenId);
       return res.status(400).json({ error: "Invalid tokenId" });
     }
 
+    console.log("[UnlockNft] ✅ 파라미터 검증 완료:", { walletAddress, numericTokenId });
+
     const vaultContract = await getVaultContract();
     const nftContractAddress = process.env.CONTRACT_ADDRESS;
+    const vaultAddress = process.env.NFT_VAULT_ADDRESS;
+    
+    console.log("[UnlockNft] 컨트랙트 주소 확인:", {
+      nftContract: nftContractAddress,
+      vaultAddress: vaultAddress
+    });
     
     if (!nftContractAddress) {
+      console.error("[UnlockNft] ❌ CONTRACT_ADDRESS 미설정");
       return res.status(500).json({ error: "CONTRACT_ADDRESS not configured" });
     }
     
@@ -1048,11 +1128,53 @@ export async function unlockNftController(req: Request, res: Response) {
     // 현재 구현은 서버가 락업했을 때만 작동합니다
     // 서버가 락업한 NFT를 서버 지갑으로 락업 해제합니다
     
+    // Vault에 NFT가 있는지 확인 (선택적 - 에러 발생 시 확인 가능)
+    try {
+      const nftContract = await getContract();
+      const vaultOwner = await nftContract.ownerOf(BigInt(numericTokenId));
+      console.log("[UnlockNft] 현재 NFT 소유자:", vaultOwner);
+      
+      if (vaultOwner.toLowerCase() !== vaultAddress?.toLowerCase()) {
+        console.warn("[UnlockNft] ⚠️ 경고: NFT가 Vault에 없을 수 있습니다. 현재 소유자:", vaultOwner);
+      } else {
+        console.log("[UnlockNft] ✅ NFT가 Vault에 있음 확인");
+      }
+    } catch (ownerCheckError: any) {
+      console.warn("[UnlockNft] ⚠️ 소유자 확인 중 오류 (무시하고 진행):", ownerCheckError.message);
+    }
+    
+    console.log("[UnlockNft] ✅ 락업 해제 트랜잭션 전송 중...");
+    console.log("[UnlockNft] 트랜잭션 파라미터:", {
+      nftContract: nftContractAddress,
+      tokenId: numericTokenId,
+      vaultAddress: vaultAddress
+    });
+    
     // NFT 락업 해제 트랜잭션 실행
     const tx = await vaultContract.unlockNft(nftContractAddress, BigInt(numericTokenId));
     
+    console.log("[UnlockNft] 트랜잭션 전송 완료:", {
+      txHash: tx.hash,
+      from: tx.from,
+      to: tx.to,
+      value: tx.value?.toString(),
+      gasLimit: tx.gasLimit?.toString(),
+      gasPrice: tx.gasPrice?.toString()
+    });
+    
+    console.log("[UnlockNft] 트랜잭션 영수증 대기 중...");
     // 트랜잭션 완료 대기 및 영수증 획득
     const receipt = await tx.wait();
+    
+    const elapsedTime = Date.now() - startTime;
+    console.log("[UnlockNft] ✅ 락업 해제 완료:", {
+      txHash: receipt?.hash ?? tx.hash,
+      blockNumber: receipt?.blockNumber,
+      gasUsed: receipt?.gasUsed?.toString(),
+      status: receipt?.status,
+      elapsedTime: `${elapsedTime}ms`
+    });
+    console.log("[UnlockNft] ===== 락업 해제 요청 종료 =====");
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
@@ -1060,7 +1182,16 @@ export async function unlockNftController(req: Request, res: Response) {
       message: "NFT unlocked successfully. The NFT is now back to the server wallet and will be returned to you."
     });
   } catch (err: any) {
-    console.error('[unlockNft] error:', err);
+    const elapsedTime = Date.now() - startTime;
+    console.error("[UnlockNft] ❌ 에러 발생:", {
+      error: err.message,
+      stack: err.stack,
+      code: err.code,
+      reason: err.reason,
+      data: err.data,
+      elapsedTime: `${elapsedTime}ms`
+    });
+    console.error("[UnlockNft] ===== 락업 해제 요청 실패 =====");
     return res.status(500).json({ error: err.message || "Unlock NFT failed" });
   }
 }

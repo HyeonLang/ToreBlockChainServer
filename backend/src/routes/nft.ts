@@ -4,7 +4,6 @@
  * 기능:
  * - NFT 컨트랙트 주소 조회
  * - NFT 민팅 (새로운 토큰 생성)
- * - NFT 소각 (토큰 삭제)
  * - NFT 조회 (소유자 및 메타데이터 URI)
  * 
  * 실행 흐름:
@@ -16,7 +15,6 @@
 
 import { Router } from "express";
 import { 
-  burnNftController, 
   contractAddressController, 
   mintNftController, 
   getNftController,
@@ -56,17 +54,6 @@ router.get("/contract-address", contractAddressController);
  */
 router.post("/mint", mintNftController);
 
-
-/**
- * POST /api/nft/burn
- * NFT를 소각하는 엔드포인트
- * 
- * 요청 본문: { tokenId: string | number }
- * - tokenId: 소각할 NFT의 토큰 ID
- * 
- * 응답: { txHash: string }
- */
-router.post("/burn", burnNftController);
 
 /**
  * GET /api/nft/wallet

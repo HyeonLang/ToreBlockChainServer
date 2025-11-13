@@ -4,7 +4,7 @@ import { Job, Worker } from "bullmq";
 
 import { ensureRedisConnected, getBullMQConnection } from "../../config/redis.config";
 import {
-  MARKETPLACE_QUEUE_NAME,
+  // MARKETPLACE_QUEUE_NAME, // 임시 비활성화
   NFT_VAULT_QUEUE_NAME,
   toKebabCase,
 } from "./index.service";
@@ -99,9 +99,9 @@ const createWorker = (queueName: string, workerName: string) => {
 };
 
 /**
- * 두 개의 BullMQ 워커를 시작합니다.
+ * BullMQ 워커를 시작합니다.
  * 
- * - marketplaceWorker: marketplace-events 큐를 처리
+ * - marketplaceWorker: marketplace-events 큐를 처리 (임시 비활성화)
  *   → NFTListed, NFTSold, NFTReclaimed 이벤트 처리
  * 
  * - nftVaultWorker: nft-vault-events 큐를 처리
@@ -110,25 +110,25 @@ const createWorker = (queueName: string, workerName: string) => {
  * 각 워커는 큐에서 이벤트를 가져와 sendEventToMainServer()를 실행합니다.
  */
 export const startBlockchainWorker = async (): Promise<{
-  marketplaceWorker: Worker<Record<string, unknown>>;
+  marketplaceWorker: Worker<Record<string, unknown>> | null;
   nftVaultWorker: Worker<Record<string, unknown>>;
 }> => {
-  if (marketplaceWorker && nftVaultWorker) {
+  if (nftVaultWorker) {
     return { marketplaceWorker, nftVaultWorker };
   }
 
   await ensureRedisConnected();
 
-  // MarketplaceVault 이벤트를 처리하는 워커
+  // MarketplaceVault 이벤트를 처리하는 워커 (임시 비활성화)
   // NFTListed, NFTSold, NFTReclaimed 이벤트 발생 시 실행됨
-  marketplaceWorker = createWorker(MARKETPLACE_QUEUE_NAME, "MarketplaceWorker");
+  // marketplaceWorker = createWorker(MARKETPLACE_QUEUE_NAME, "MarketplaceWorker");
   
   // NftVault 이벤트를 처리하는 워커
   // NftLocked, NftUnlocked 이벤트 발생 시 실행됨
   nftVaultWorker = createWorker(NFT_VAULT_QUEUE_NAME, "NftVaultWorker");
 
   // 이벤트 핸들러 등록
-  [marketplaceWorker, nftVaultWorker].forEach((worker) => {
+  [nftVaultWorker].filter(Boolean).forEach((worker) => {
     worker.on("completed", (job: Job<Record<string, unknown>>) => {
       console.log("[BlockchainWorker] 작업 완료", {
         jobId: job.id,

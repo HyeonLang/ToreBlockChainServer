@@ -16,8 +16,8 @@ import fs from "fs";
 import nftRouter from "./routes/nft";
 import multiTokenRouter from "./routes/multiToken";
 import { errorHandler } from "./middleware/errorHandler";
-import { initializeEventListeners } from "./services/blockchain/index.service";
-import { startBlockchainWorker } from "./services/blockchain/worker.service";
+// import { initializeEventListeners } from "./services/blockchain/index.service";
+// import { startBlockchainWorker } from "./services/blockchain/worker.service";
 
 // 환경 변수 로드 (.env 파일에서 환경변수 읽기)
 // 현재 작업 디렉토리가 backend/src이므로 프로젝트 루트로 상대 경로 설정
@@ -100,17 +100,19 @@ export default app;
 /**
  * BullMQ 워커와 블록체인 이벤트 리스너를 동시에 초기화합니다.
  * 서버가 시작될 때 비동기로 호출하여 MQ 파이프라인을 구성합니다.
+ * 
+ * 임시 비활성화: 리스너와 워커 사용 중지
  */
-const startBlockchainServices = async (): Promise<void> => {
-  try {
-    await startBlockchainWorker();
-    await initializeEventListeners();
-    console.log("[App] 블록체인 이벤트 리스너와 워커가 시작되었습니다.");
-  } catch (error) {
-    console.error("[App] 블록체인 서비스 초기화 실패:", error);
-  }
-};
+// const startBlockchainServices = async (): Promise<void> => {
+//   try {
+//     await startBlockchainWorker();
+//     await initializeEventListeners();
+//     console.log("[App] 블록체인 이벤트 리스너와 워커가 시작되었습니다.");
+//   } catch (error) {
+//     console.error("[App] 블록체인 서비스 초기화 실패:", error);
+//   }
+// };
 
-void startBlockchainServices();
+// void startBlockchainServices();
 
 
