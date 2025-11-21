@@ -106,9 +106,9 @@ export async function getMultiTokenFactoryWithWallet() {
     throw new Error("MULTI_TOKEN_FACTORY_ADDRESS is required. Please set MULTI_TOKEN_FACTORY_ADDRESS environment variable.");
   }
   
-  const pk = process.env.PRIVATE_KEY;
+  const pk = process.env.TOKEN_OWNER;
   if (!pk) {
-    throw new Error("PRIVATE_KEY is required. Please set PRIVATE_KEY environment variable.");
+    throw new Error("TOKEN_OWNER is required. Please set TOKEN_OWNER environment variable.");
   }
   
   console.log(`[MultiToken] Factory address: ${address}`);
@@ -164,9 +164,9 @@ export async function getTokenContract(tokenAddress: string) {
  * @returns Promise<ethers.Contract> - 서명 가능한 토큰 컨트랙트 인스턴스
  */
 export async function getTokenContractWithWallet(tokenAddress: string) {
-  const pk = process.env.PRIVATE_KEY;
+  const pk = process.env.TOKEN_OWNER;
   if (!pk) {
-    throw new Error("PRIVATE_KEY is required. Please set PRIVATE_KEY environment variable.");
+    throw new Error("TOKEN_OWNER is required. Please set TOKEN_OWNER environment variable.");
   }
   
   const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || process.env.FUJI_RPC_URL || "https://api.avax-test.network/ext/bc/C/rpc");

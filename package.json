@@ -23,7 +23,13 @@
     "deploy:tore:fuji": "hardhat run blockchain/scripts/deployToreToken.ts --network fuji",
     "deploy:tore:avalanche": "hardhat run blockchain/scripts/deployToreToken.ts --network avalanche",
     "deploy:factory:fuji": "hardhat run blockchain/scripts/deployMultiTokenFactory.ts --network fuji",
-    "deploy:factory:avalanche": "hardhat run blockchain/scripts/deployMultiTokenFactory.ts --network avalanche"
+    "deploy:factory:avalanche": "hardhat run blockchain/scripts/deployMultiTokenFactory.ts --network avalanche",
+    "create:token:fuji": "hardhat run blockchain/scripts/createToken.ts --network fuji",
+    "create:token:avalanche": "hardhat run blockchain/scripts/createToken.ts --network avalanche",
+    "deploy:marketplace-vault:fuji": "hardhat run blockchain/scripts/deployMarketplaceVault.ts --network fuji",
+    "deploy:marketplace-vault:avalanche": "hardhat run blockchain/scripts/deployMarketplaceVault.ts --network avalanche",
+    "verify:fuji": "hardhat run blockchain/scripts/verifyDeployments.ts --network fuji",
+    "verify:avalanche": "hardhat run blockchain/scripts/verifyDeployments.ts --network avalanche"
   },
   "engines": {
     "node": ">=18.17"

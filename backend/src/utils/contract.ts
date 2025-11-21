@@ -33,11 +33,9 @@ export function getProvider(): ethers.JsonRpcProvider {
 }
 
 /**
- * 지갑 인스턴스 생성
+ * 지갑 인스턴스 생성 (기본 - 하위 호환성 유지)
  * 
- * 실행 흐름:
- * 1. 환경변수에서 개인키 확인
- * 2. Provider와 개인키로 지갑 인스턴스 생성
+ * @deprecated 각 기능별 지갑 함수를 사용하세요 (getNftWallet, getTokenWallet, getLockupWallet, getMarketWallet)
  * 
  * @returns Promise<ethers.Wallet> - 서명 가능한 지갑 인스턴스
  * @throws Error - PRIVATE_KEY 환경변수가 없을 때
@@ -45,6 +43,54 @@ export function getProvider(): ethers.JsonRpcProvider {
 export async function getWallet(): Promise<ethers.Wallet> {
   const pk = process.env.PRIVATE_KEY;
   if (!pk) throw new Error("PRIVATE_KEY is required");
+  return new ethers.Wallet(pk, getProvider());
+}
+
+/**
+ * NFT 소유자 지갑 인스턴스 생성
+ * 
+ * @returns Promise<ethers.Wallet> - NFT 관련 작업용 지갑 인스턴스
+ * @throws Error - NFT_OWNER 환경변수가 없을 때
+ */
+export async function getNftWallet(): Promise<ethers.Wallet> {
+  const pk = process.env.NFT_OWNER;
+  if (!pk) throw new Error("NFT_OWNER is required");
+  return new ethers.Wallet(pk, getProvider());
+}
+
+/**
+ * 토큰 소유자 지갑 인스턴스 생성
+ * 
+ * @returns Promise<ethers.Wallet> - 토큰 관련 작업용 지갑 인스턴스
+ * @throws Error - TOKEN_OWNER 환경변수가 없을 때
+ */
+export async function getTokenWallet(): Promise<ethers.Wallet> {
+  const pk = process.env.TOKEN_OWNER;
+  if (!pk) throw new Error("TOKEN_OWNER is required");
+  return new ethers.Wallet(pk, getProvider());
+}
+
+/**
+ * 락업 소유자 지갑 인스턴스 생성
+ * 
+ * @returns Promise<ethers.Wallet> - 락업 관련 작업용 지갑 인스턴스
+ * @throws Error - LOCKUP_OWNER 환경변수가 없을 때
+ */
+export async function getLockupWallet(): Promise<ethers.Wallet> {
+  const pk = process.env.LOCKUP_OWNER;
+  if (!pk) throw new Error("LOCKUP_OWNER is required");
+  return new ethers.Wallet(pk, getProvider());
+}
+
+/**
+ * 마켓 소유자 지갑 인스턴스 생성
+ * 
+ * @returns Promise<ethers.Wallet> - 마켓 관련 작업용 지갑 인스턴스
+ * @throws Error - MARKET_OWNER 환경변수가 없을 때
+ */
+export async function getMarketWallet(): Promise<ethers.Wallet> {
+  const pk = process.env.MARKET_OWNER;
+  if (!pk) throw new Error("MARKET_OWNER is required");
   return new ethers.Wallet(pk, getProvider());
 }
 
@@ -74,8 +120,8 @@ export async function getContract() {
     throw new Error("CONTRACT_ADDRESS is required");
   }
   
-  // 지갑 인스턴스 생성 (개인키로 서명 가능)
-  const wallet = await getWallet();
+  // NFT 소유자 지갑 인스턴스 생성 (개인키로 서명 가능)
+  const wallet = await getNftWallet();
   
   // 컨트랙트 인스턴스 생성 (주소, ABI, 지갑)
   return new ethers.Contract(address, abiJson.abi, wallet);
@@ -90,22 +136,22 @@ export async function getContract() {
  * 3. 컨트랙트 주소, ABI, 지갑으로 Vault 컨트랙트 인스턴스 생성
  * 
  * @returns Promise<ethers.Contract> - NftVault 컨트랙트 인스턴스
- * @throws Error - NFT_VAULT_ADDRESS 환경변수가 없을 때
+ * @throws Error - LOCKUP_VAULT_ADDRESS 환경변수가 없을 때
  */
 export async function getVaultContract() {
   console.log('[getVaultContract] 환경변수 디버깅:', {
-    NFT_VAULT_ADDRESS: process.env.NFT_VAULT_ADDRESS,
+    LOCKUP_VAULT_ADDRESS: process.env.LOCKUP_VAULT_ADDRESS,
     NODE_ENV: process.env.NODE_ENV
   });
   
-  const address = process.env.NFT_VAULT_ADDRESS;
+  const address = process.env.LOCKUP_VAULT_ADDRESS;
   if (!address) {
-    console.error('[getVaultContract] NFT_VAULT_ADDRESS가 설정되지 않았습니다.');
-    throw new Error("NFT_VAULT_ADDRESS is required");
+    console.error('[getVaultContract] LOCKUP_VAULT_ADDRESS가 설정되지 않았습니다.');
+    throw new Error("LOCKUP_VAULT_ADDRESS is required");
   }
   
-  // 지갑 인스턴스 생성 (개인키로 서명 가능)
-  const wallet = await getWallet();
+  // 락업 소유자 지갑 인스턴스 생성 (개인키로 서명 가능)
+  const wallet = await getLockupWallet();
   
   // 컨트랙트 인스턴스 생성 (주소, ABI, 지갑)
   return new ethers.Contract(address, vaultAbiJson.abi, wallet);

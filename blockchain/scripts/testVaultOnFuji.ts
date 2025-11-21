@@ -14,10 +14,10 @@ async function main() {
   console.log("💰 잔액:", ethers.formatEther(balance), "AVAX\n");
 
   const nftContractAddress = process.env.CONTRACT_ADDRESS;
-  const vaultContractAddress = process.env.NFT_VAULT_ADDRESS;
+  const vaultContractAddress = process.env.LOCKUP_VAULT_ADDRESS;
 
   if (!nftContractAddress || !vaultContractAddress) {
-    console.error("❌ 환경변수 설정 필요 (CONTRACT_ADDRESS, NFT_VAULT_ADDRESS)");
+    console.error("❌ 환경변수 설정 필요 (CONTRACT_ADDRESS, LOCKUP_VAULT_ADDRESS)");
     return;
   }
 

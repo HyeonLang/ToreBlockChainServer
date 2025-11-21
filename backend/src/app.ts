@@ -41,7 +41,11 @@ dotenv.config(); // 기본 경로도 시도
 
 console.log('[App] 환경변수 로딩 확인:', {
   CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS ? '설정됨' : '설정안됨',
-  PRIVATE_KEY: process.env.PRIVATE_KEY ? '설정됨' : '설정안됨',
+  NFT_OWNER: process.env.NFT_OWNER ? '설정됨' : '설정안됨',
+  TOKEN_OWNER: process.env.TOKEN_OWNER ? '설정됨' : '설정안됨',
+  LOCKUP_OWNER: process.env.LOCKUP_OWNER ? '설정됨' : '설정안됨',
+  MARKET_OWNER: process.env.MARKET_OWNER ? '설정됨' : '설정안됨',
+  PRIVATE_KEY: process.env.PRIVATE_KEY ? '설정됨 (하위 호환성)' : '설정안됨',
   현재_디렉토리: process.cwd()
 });
 

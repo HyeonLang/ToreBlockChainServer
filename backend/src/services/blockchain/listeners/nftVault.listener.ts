@@ -197,7 +197,7 @@ export const initializeNftVaultListener = async (): Promise<NftVaultListenerReso
   }
 
   const wssUrl = resolveEnv("WSS_PROVIDER_URL");
-  const nftVaultAddress = resolveEnv("NFT_VAULT_ADDRESS");
+  const nftVaultAddress = resolveEnv("LOCKUP_VAULT_ADDRESS");
 
   const provider = new WebSocketProvider(wssUrl);
   const nftVaultAbi = artifactToAbi(NftVaultArtifact);

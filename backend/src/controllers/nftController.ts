@@ -969,7 +969,7 @@ export async function lockNftController(req: Request, res: Response) {
     const nftContract = await getContract();
     const vaultContract = await getVaultContract();
     const nftContractAddress = process.env.CONTRACT_ADDRESS;
-    const vaultAddress = process.env.NFT_VAULT_ADDRESS;
+    const vaultAddress = process.env.LOCKUP_VAULT_ADDRESS;
     
     console.log("[LockNft] 컨트랙트 주소 확인:", {
       nftContract: nftContractAddress,
@@ -1045,7 +1045,7 @@ export async function lockNftController(req: Request, res: Response) {
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
-      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
+      vaultAddress: process.env.LOCKUP_VAULT_ADDRESS || null,
       message: "NFT locked successfully. The NFT is now in the vault."
     });
   } catch (err: any) {
@@ -1112,7 +1112,7 @@ export async function unlockNftController(req: Request, res: Response) {
 
     const vaultContract = await getVaultContract();
     const nftContractAddress = process.env.CONTRACT_ADDRESS;
-    const vaultAddress = process.env.NFT_VAULT_ADDRESS;
+    const vaultAddress = process.env.LOCKUP_VAULT_ADDRESS;
     
     console.log("[UnlockNft] 컨트랙트 주소 확인:", {
       nftContract: nftContractAddress,
@@ -1178,7 +1178,7 @@ export async function unlockNftController(req: Request, res: Response) {
     
     return res.json({ 
       txHash: receipt?.hash ?? tx.hash,
-      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
+      vaultAddress: process.env.LOCKUP_VAULT_ADDRESS || null,
       message: "NFT unlocked successfully. The NFT is now back to the server wallet and will be returned to you."
     });
   } catch (err: any) {
@@ -1236,7 +1236,7 @@ export async function getVaultedNftsController(req: Request, res: Response) {
     return res.json({ 
       walletAddress: walletAddress,
       nftContract: nftContractAddress,
-      vaultAddress: process.env.NFT_VAULT_ADDRESS || null,
+      vaultAddress: process.env.LOCKUP_VAULT_ADDRESS || null,
       vaultedNfts: tokenIds
     });
   } catch (err: any) {
